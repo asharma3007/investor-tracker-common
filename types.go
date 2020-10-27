@@ -48,7 +48,7 @@ func FixTemplateSourceDir() {
 	}
 }
 
-func log(message string) {
+func Log(message string) {
 	fmt.Println(message)
 }
 
@@ -59,21 +59,21 @@ func CheckError(err error) {
 }
 
 func ConnectDb() *sql.DB {
-	log("Connecting to db")
+	Log("Connecting to db")
 
 	dbUrl := os.Getenv(EnvDatabaseUrl)
 	password := os.Getenv(EnvDatabasePassword)
 
-	log("Connection string")
+	Log("Connection string")
 	// connection string
 	mysqlconn := user + ":" + password + "@tcp(" + dbUrl + ":" + port +")/" + dbname
 
-	log("Opening db")
+	Log("Opening db")
 	// open database
 	db, err := sql.Open("mysql", mysqlconn)
 	CheckError(err)
 
-	log("Doing ping")
+	Log("Doing ping")
 	// check db
 	err = db.Ping()
 	CheckError(err)
