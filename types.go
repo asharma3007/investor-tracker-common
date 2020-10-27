@@ -48,6 +48,15 @@ func FixTemplateSourceDir() {
 	}
 }
 
+func log(message string) {
+	fmt.Println(message)
+}
+
+func CheckError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 
 func ConnectDb() *sql.DB {
 	log("Connecting to db")
