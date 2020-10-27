@@ -1,7 +1,24 @@
 package investor_tracker_common
 
 import (
+	"database/sql"
+	"fmt"
 	. "github.com/shopspring/decimal"
+	"os"
+)
+
+const (
+	EnvDatabaseUrl      = "DATABASE_URL"
+	EnvDatabasePassword = "DATABASE_PASSWORD"
+	port                = "3306"
+	user                = "root"
+	dbname              = "tracker"
+
+	EnvUrlEmailQueue 	= "URL_EMAIL_QUEUE"
+
+	EnvTokenMarketStack = "TOKEN_MARKETSTACK"
+
+	CloudfunctionSourceDir = "serverless_function_source_code"
 )
 
 type Stock struct {
@@ -20,4 +37,39 @@ type MessageSendEmail struct {
 	PlainText string
 	SenderName string
 	Subject string
+}
+
+
+
+func FixTemplateSourceDir() {
+	fileInfo, err := os.Stat(CloudfunctionSourceDir)
+	if err == nil && fileInfo.IsDir() {
+		_ = os.Chdir(CloudfunctionSourceDir)
+	}
+}
+
+
+func ConnectDb() *sql.DB {
+	log("Connecting to db")
+
+	dbUrl := os.Getenv(EnvDatabaseUrl)
+	password := os.Getenv(EnvDatabasePassword)
+
+	log("Connection string")
+	// connection string
+	mysqlconn := user + ":" + password + "@tcp(" + dbUrl + ":" + port +")/" + dbname
+
+	log("Opening db")
+	// open database
+	db, err := sql.Open("mysql", mysqlconn)
+	CheckError(err)
+
+	log("Doing ping")
+	// check db
+	err = db.Ping()
+	CheckError(err)
+
+	fmt.Println("Connected!")
+
+	return db
 }
