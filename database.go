@@ -1,4 +1,4 @@
-package investor_tracker_common
+package common
 
 import (
 	"database/sql"
