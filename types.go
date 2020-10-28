@@ -1,6 +1,7 @@
 package investor_tracker_common
 
 import (
+	"encoding/json"
 	. "github.com/shopspring/decimal"
 )
 
@@ -33,4 +34,31 @@ type MessageSendEmail struct {
 	PlainText string
 	SenderName string
 	Subject string
+}
+
+type Holding struct {
+	StockId      int
+	Lots         []Lot
+	Transactions []Transaction
+}
+
+type Lot struct {
+	StockId     int
+	PriceBought Decimal
+	Units       Decimal
+	Transaction Transaction
+}
+
+type Transaction struct {
+	TransactionId int
+	StockId int
+	DtTrade string
+	UnitPrice Decimal
+	Units Decimal
+	ValueQuoted Decimal
+}
+
+func (stock Stock) ToString() string {
+	desc, _ := json.Marshal(stock)
+	return string(desc)
 }
