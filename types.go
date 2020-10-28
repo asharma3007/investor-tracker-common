@@ -289,7 +289,7 @@ type DefaultHttp struct {
 
 }
 
-func buildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
+func buildWatchDetailMarketStack(client HttpSource, stock *Stock) WatchDetail {
 	log := fmt.Sprintf("Getting price history for %v from URL: %v", stock.ToString(), stock.Url)
 	Log(log)
 
@@ -318,7 +318,7 @@ func buildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
 	return wd
 }
 
-func (stock Stock) populateFromHl() {
+func (stock *Stock) populateFromHl() {
 	fullUrl := stock.GetPriceUrl()
 
 	stockPage, err := http.Get(fullUrl)
@@ -364,8 +364,7 @@ func parsePrice(priceStr string) Decimal {
 	return price
 }
 
-
-func (stock Stock) populateFromMarketStack() {
+func (stock *Stock) populateFromMarketStack() {
 	var httpClient DefaultHttp
 	watchDetail := buildWatchDetailMarketStack(&httpClient, stock)
 	stock.PriceBuy = watchDetail.GetPriceLastClose()
