@@ -23,7 +23,7 @@ func FixTemplateSourceDir() {
 }
 
 
-func PostJson(alerts []alert) {
+func PostJson(alerts []Alert) {
 	url := os.Getenv(EnvUrlEmailQueue)
 
 	buf := new(bytes.Buffer)
@@ -39,4 +39,8 @@ func PostJson(alerts []alert) {
 	fmt.Println("response Status:", res.Status)
 	// Print the body to the stdout
 	_, _ = io.Copy(os.Stdout, res.Body)
+}
+
+type TestStruct struct {
+	test string
 }

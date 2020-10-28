@@ -68,6 +68,9 @@ type Alert struct {
 	Message string
 }
 
+func TestAnkit(test string) string {
+	return test
+}
 
 type MonitorInstruction struct {
 	StockId            int
