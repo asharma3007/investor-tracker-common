@@ -13,6 +13,9 @@ const (
 	dbname              = "tracker"
 
 	EnvTokenMarketStack = "TOKEN_MARKETSTACK"
+
+	PriceTypeSell = 0
+	PriceTypeBuy = 1
 )
 
 type Stock struct {
@@ -78,4 +81,19 @@ type MonitorInstruction struct {
 	MarkerPrice        Decimal
 	Message            string
 	Holding            Holding
+}
+
+func (instruction MonitorInstruction) getDesc() string {
+	if instruction.isSell() {
+		return "Sell"
+	}
+	return "Buy"
+}
+
+func (instruction MonitorInstruction) isBuy() bool {
+	return instruction.PriceTypeToMonitor == PriceTypeBuy
+}
+
+func (instruction MonitorInstruction) isSell() bool {
+	return instruction.PriceTypeToMonitor == PriceTypeSell
 }
