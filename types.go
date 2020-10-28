@@ -94,18 +94,18 @@ type MonitorInstruction struct {
 	Holding            Holding
 }
 
-func (instruction MonitorInstruction) getDesc() string {
-	if instruction.isSell() {
+func (instruction MonitorInstruction) GetDesc() string {
+	if instruction.IsSell() {
 		return "Sell"
 	}
 	return "Buy"
 }
 
-func (instruction MonitorInstruction) isBuy() bool {
+func (instruction MonitorInstruction) IsBuy() bool {
 	return instruction.PriceTypeToMonitor == PriceTypeBuy
 }
 
-func (instruction MonitorInstruction) isSell() bool {
+func (instruction MonitorInstruction) IsSell() bool {
 	return instruction.PriceTypeToMonitor == PriceTypeSell
 }
 
