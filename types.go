@@ -226,7 +226,7 @@ func (wd *WatchDetail) GetChangePercentDesc() string {
 		previousDay := wd.History.Eods[1]
 		lastClose := lastDay.PriceClose
 		previousClose := previousDay.PriceClose
-		changePercent := getPercent(lastClose, previousClose)
+		changePercent := getPercent(previousClose, lastClose)
 		return GetPercentDesc(changePercent)
 	}
 
