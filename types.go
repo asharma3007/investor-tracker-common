@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	. "github.com/shopspring/decimal"
+	"os"
 	"strings"
 	"time"
 )
@@ -210,4 +211,58 @@ type Pagination struct {
 	Offset int
 	Count int
 	Total int
+}
+
+
+func (stock *Stock) GetPriceUrl() string {
+	if stock.IsSourceHl() {
+		return stock.getHlUrl()
+	} else {
+		return stock.getMarketStackUrl()
+	}
+}
+
+func (stock *Stock) getHlUrl() string {
+	var urlToUse string
+	// need to override the full URL for some of them
+	if strings.HasPrefix(stock.HlUrlOverride, "http") {
+		urlToUse = stock.HlUrlOverride
+	} else {
+
+		var urlSuffix string
+		if len(stock.HlUrlOverride) != 0 {
+			urlSuffix = stock.HlUrlOverride
+		} else {
+			urlSuffix = getHlUrlFromName(stock.HlName)
+		}
+		urlToUse = "https://www.hl.co.uk/funds/fund-discounts,-prices--and--factsheets/search-results/" + urlSuffix
+	}
+
+	return urlToUse
+}
+
+func (stock *Stock) getMarketStackUrl() string {
+	today := time.Now()
+	weekAgo := today.Add(-time.Hour * 24 * 7)
+
+	todayStr := today.Format("2006-01-02")
+	weekAgoStr := weekAgo.Format("2006-01-02")
+
+	return fmt.Sprintf("http://api.marketstack.com/v1/eod?symbols=%v&access_key=%v&date_from=%v&date_to=%v",
+		stock.Symbol,
+		os.Getenv(EnvTokenMarketStack),
+		weekAgoStr,
+		todayStr)
+}
+
+func getHlUrlFromName(hlName string) string {
+	retVal := strings.ReplaceAll(hlName, " ", "-")
+	retVal = strings.ReplaceAll(retVal, "---", "-")
+	retVal = strings.ReplaceAll(retVal, "%", "")
+	retVal = strings.ReplaceAll(retVal, "&", "and")
+	retVal = strings.ToLower(retVal)
+
+	retVal = retVal[:1] + "/" + retVal
+
+	return retVal
 }
