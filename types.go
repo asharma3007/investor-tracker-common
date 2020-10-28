@@ -397,13 +397,13 @@ func BuildWatchDetail(client *DefaultHttp, stock Stock) WatchDetail {
 		return buildWatchDetailHl(stock)
 		//return watchDetail{}
 	} else {
-		return buildWatchDetailMarketStack(client, stock)
+		return BuildWatchDetailMarketStack(client, stock)
 		//return watchDetail{}
 	}
 }
 
 func buildWatchDetailHl(stock Stock) WatchDetail {
-	fmt.Sprintf("Getting history from HL for %v from %v", stock.ToString(), stock.Url)
+	Log(fmt.Sprintf("Getting history from HL for %v from %v", stock.ToString(), stock.Url))
 
 	stockPage, err := http.Get(stock.Url)
 	CheckError(err)
@@ -553,7 +553,7 @@ func parsePrice(priceStr string) Decimal {
 
 func (stock *Stock) populateFromMarketStack() {
 	var httpClient DefaultHttp
-	watchDetail := buildWatchDetailMarketStack(&httpClient, *stock)
+	watchDetail := BuildWatchDetailMarketStack(&httpClient, *stock)
 	stock.PriceBuy = watchDetail.GetPriceLastClose()
 	stock.PriceSell = watchDetail.GetPriceLastClose()
 }
