@@ -452,7 +452,7 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 	}
 }
 
-func buildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
+func BuildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
 	log := fmt.Sprintf("Getting price history for %v from URL: %v", stock.ToString(), stock.Url)
 	Log(log)
 
