@@ -2,6 +2,7 @@ package investor_tracker_common
 
 import (
 	"encoding/json"
+	"fmt"
 	. "github.com/shopspring/decimal"
 	"strings"
 	"time"
@@ -109,7 +110,7 @@ func (instruction MonitorInstruction) isSell() bool {
 }
 
 
-func (holding Holding) getUnitsTotal() Decimal {
+func (holding Holding) GetUnitsTotal() Decimal {
 	retVal := NewFromInt(0)
 	for _, lot := range holding.Lots {
 		retVal = retVal.Add(lot.Units)
@@ -117,29 +118,39 @@ func (holding Holding) getUnitsTotal() Decimal {
 	return retVal
 }
 
-func (lot Lot) getValueTotal() Decimal {
+func (stock Stock) GetRelevantPrice(instruction MonitorInstruction) Decimal {
+	if instruction.PriceTypeToMonitor == PriceTypeBuy {
+		return stock.PriceBuy
+	} else if instruction.PriceTypeToMonitor == PriceTypeSell {
+		return stock.PriceSell
+	} else {
+		panic(fmt.Sprint("Unknown price type ", instruction.PriceTypeToMonitor))
+	}
+}
+
+func (lot Lot) GetValueTotal() Decimal {
 	return lot.PriceBought.Mul(lot.Units)
 }
 
-func (holding Holding) getPriceAverage() Decimal {
+func (holding Holding) GetPriceAverage() Decimal {
 	totalValue := NewFromInt(0)
 	for _, lot := range holding.Lots {
-		lotValue := lot.getValueTotal()
+		lotValue := lot.GetValueTotal()
 		totalValue = totalValue.Add(lotValue)
 	}
 
-	totalUnits := holding.getUnitsTotal()
+	totalUnits := holding.GetUnitsTotal()
 	return totalValue.Div(totalUnits)
 }
 
-type watchDetail struct {
+type WatchDetail struct {
 	Stock Stock
-	Watch watch
-	History priceHistory
+	Watch Watch
+	History PriceHistory
 	ChangePercent Decimal
 }
 
-type watch struct {
+type Watch struct {
 	WatchId        int
 	StockId        int
 	DtReference    string
@@ -149,11 +160,11 @@ type watch struct {
 	Notes		   string
 }
 
-type priceHistory struct {
-	Eods []eodMarketStack
+type PriceHistory struct {
+	Eods []EodMarketStack
 }
 
-type eodMarketStack struct {
+type EodMarketStack struct {
 	Date timeMarketStack `json:"date"`
 	PriceClose Decimal `json:"close"`
 }
