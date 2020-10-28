@@ -191,3 +191,23 @@ func (transaction Transaction) IsBuy() bool {
 func (transaction Transaction) IsSell() bool {
 	return transaction.ValueQuoted.IsPositive()
 }
+
+
+func (wd *WatchDetail) GetPriceLastClose() Decimal {
+	if len(wd.History.Eods) == 0 { return NewFromInt(-1) }
+
+	lastEod := wd.History.Eods[0]
+	return lastEod.PriceClose
+}
+
+type ResponseMarketStack struct {
+	Pagination Pagination // `json:"pagination"`
+	Data []EodMarketStack `json:"data"`
+}
+
+type Pagination struct {
+	Limit int
+	Offset int
+	Count int
+	Total int
+}
