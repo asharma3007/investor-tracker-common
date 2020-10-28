@@ -3,7 +3,10 @@ package investor_tracker_common
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/PuerkitoBio/goquery"
 	. "github.com/shopspring/decimal"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -81,10 +84,6 @@ func (stock *Stock) IsSourceHl() bool {
 type Alert struct {
 	Instruction MonitorInstruction
 	Message string
-}
-
-func TestAnkit(test string) string {
-	return test
 }
 
 type MonitorInstruction struct {
@@ -265,4 +264,110 @@ func getHlUrlFromName(hlName string) string {
 	retVal = retVal[:1] + "/" + retVal
 
 	return retVal
+}
+
+func (stock Stock) PopulateCurrentPrice() Stock {
+	if stock.IsSourceHl() {
+		stock.populateFromHl()
+	} else {
+		stock.populateFromMarketStack()
+	}
+
+	return stock
+}
+
+//go:generate mockgen -destination=mocks/mock_httpsource.go -package=cloudfunction . HttpSource
+type HttpSource interface {
+	HttpGet(url string) (*http.Response, error)
+}
+
+func (client *DefaultHttp) HttpGet(url string) (*http.Response, error) {
+	return http.Get(url)
+}
+
+type DefaultHttp struct {
+
+}
+
+func buildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
+	log := fmt.Sprintf("Getting price history for %v from URL: %v", stock.ToString(), stock.Url)
+	Log(log)
+
+	response, err := client.HttpGet(stock.Url)
+	CheckError(err)
+
+	defer response.Body.Close()
+
+	//json.NewDecoder(response.Body).Decode(target)
+	//var str string
+	//decoder := json.NewDecoder(response.Body)
+	//decoder.UseNumber()
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	CheckError(err)
+
+	responseString := string(responseData)
+	Log(responseString)
+
+	var responseDays ResponseMarketStack
+	err = json.Unmarshal(responseData, &responseDays)
+	CheckError(err)
+
+	var wd WatchDetail
+	wd.History.Eods = responseDays.Data
+	return wd
+}
+
+func (stock Stock) populateFromHl() {
+	fullUrl := stock.GetPriceUrl()
+
+	stockPage, err := http.Get(fullUrl)
+	CheckError(err)
+
+	stockDoc, _ := goquery.NewDocumentFromReader(stockPage.Body)
+
+	priceBuyStr, err := stockDoc.Find(".ask.price-divide").Html()
+	CheckError(err)
+	priceSellStr, err := stockDoc.Find(".bid.price-divide").Html()
+	CheckError(err)
+
+	if len(priceSellStr) == 0 || len(priceSellStr) == 0 {
+		Log("Failed to get a price for stock")
+		message := fmt.Sprint(stock.HlName, " Url: ", fullUrl, " Buy ", priceBuyStr, " Sell ", priceSellStr)
+		Log(message)
+	}
+
+	stock.PriceBuy =  parsePrice(priceBuyStr)
+	stock.PriceSell= parsePrice(priceSellStr)
+}
+
+func parsePrice(priceStr string) Decimal {
+	priceStr = strings.ReplaceAll(priceStr, "p", "")
+	priceStr = strings.ReplaceAll(priceStr, ",", "")
+	if len(priceStr) == 0 {
+		priceStr = "0"
+	}
+
+	if strings.HasPrefix(priceStr, "£") {
+		priceStr = strings.ReplaceAll(priceStr, "£", "")
+		ixDecimal := strings.Index(priceStr, ".")
+		dpGiven := len(priceStr) - (ixDecimal + 1)
+		zeroesNeeded := 2 - dpGiven
+		for i := 0; i <zeroesNeeded; i++ {
+			priceStr += "0"
+		}
+		priceStr = strings.ReplaceAll(priceStr, ".", "")
+	}
+
+	price, err := NewFromString(priceStr)
+	CheckError(err)
+	return price
+}
+
+
+func (stock Stock) populateFromMarketStack() {
+	var httpClient DefaultHttp
+	watchDetail := buildWatchDetailMarketStack(&httpClient, stock)
+	stock.PriceBuy = watchDetail.GetPriceLastClose()
+	stock.PriceSell = watchDetail.GetPriceLastClose()
 }
