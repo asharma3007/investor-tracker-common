@@ -12,11 +12,7 @@ const (
 	user                = "root"
 	dbname              = "tracker"
 
-	EnvUrlEmailQueue 	= "URL_EMAIL_QUEUE"
-
 	EnvTokenMarketStack = "TOKEN_MARKETSTACK"
-
-	CloudfunctionSourceDir = "serverless_function_source_code"
 )
 
 type Stock struct {
@@ -61,4 +57,22 @@ type Transaction struct {
 func (stock Stock) ToString() string {
 	desc, _ := json.Marshal(stock)
 	return string(desc)
+}
+
+func (stock *Stock) IsSourceHl() bool {
+	return len(stock.HlName) > 0
+}
+
+type Alert struct {
+	Instruction MonitorInstruction
+	Message string
+}
+
+
+type MonitorInstruction struct {
+	StockId            int
+	PriceTypeToMonitor int
+	MarkerPrice        Decimal
+	Message            string
+	Holding            Holding
 }
