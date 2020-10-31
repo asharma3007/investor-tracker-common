@@ -2,9 +2,13 @@ package common
 
 import (
 	"bytes"
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/net/context"
+	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"io"
+	"log"
 	"net/http"
 	"os"
 )
@@ -43,4 +47,31 @@ func PostJson(alerts []Alert) {
 
 type TestStruct struct {
 	test string
+}
+
+
+func GetSecretsClient() *secretmanager.Client {
+	// Create the client.
+	ctx := context.Background()
+	client, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		log.Fatalf("failed to setup client: %v", err)
+	}
+
+	return client
+}
+
+func GetSecret(secretName string) string {
+	client := GetSecretsClient()
+
+	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
+		Name: "projects/investor-tracker/secrets/" + secretName + "/versions/latest",
+	}
+
+	ctx := context.Background()
+	result, err := client.AccessSecretVersion(ctx, accessRequest)
+	if err != nil {
+		log.Fatalf("failed to access secret version: %v", err)
+	}
+	return string(result.Payload.Data);
 }

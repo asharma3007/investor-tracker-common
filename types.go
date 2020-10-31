@@ -15,10 +15,8 @@ import (
 
 const (
 	EnvDatabaseUrl      = "DATABASE_URL"
-	EnvDatabasePassword = "DATABASE_PASSWORD"
-	port                = "3306"
-	user                = "root"
-	dbname              = "tracker"
+	EnvDatabasePort		= "DATABASE_PORT"
+	EnvDatabaseName		= "DATABASE_NAME"
 
 	EnvTokenMarketStack = "TOKEN_MARKETSTACK"
 	EnvTokenIex         = "TOKEN_IEX"
