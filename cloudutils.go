@@ -45,11 +45,6 @@ func PostJson(alerts []Alert) {
 	_, _ = io.Copy(os.Stdout, res.Body)
 }
 
-type TestStruct struct {
-	test string
-}
-
-
 func GetSecretsClient() *secretmanager.Client {
 	// Create the client.
 	ctx := context.Background()

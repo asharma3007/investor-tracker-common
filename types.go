@@ -17,6 +17,8 @@ const (
 	EnvDatabaseUrl      = "DATABASE_URL"
 	EnvDatabasePort		= "DATABASE_PORT"
 	EnvDatabaseName		= "DATABASE_NAME"
+	EnvSecretDbUser	= "SECRET_DATABASE_USER"
+	EncSecretDbPassword = "SECRET_DATABASE_PASSWORD"
 
 	EnvTokenMarketStack = "TOKEN_MARKETSTACK"
 	EnvTokenIex         = "TOKEN_IEX"

@@ -13,8 +13,8 @@ func ConnectDb() *sql.DB {
 	port := os.Getenv(EnvDatabasePort)
 	dbname := os.Getenv(EnvDatabaseName)
 
-	user := GetSecret("")
-	password := GetSecret("")
+	user := GetSecret(EnvSecretDbUser)
+	password := GetSecret(EncSecretDbPassword)
 
 	Log("Connection string")
 	// connection string
