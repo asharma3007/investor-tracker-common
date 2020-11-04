@@ -14,7 +14,7 @@ func ConnectDb() *sql.DB {
 	dbname := os.Getenv(EnvDatabaseName)
 
 	user := GetSecret(EnvSecretDbUser)
-	password := GetSecret(EncSecretDbPassword)
+	password := GetSecret(EnvSecretDbPassword)
 
 	Log("Connection string")
 	// connection string
