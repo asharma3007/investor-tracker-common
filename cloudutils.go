@@ -15,6 +15,7 @@ import (
 
 const (
 	EnvUrlEmailQueue 	= "URL_EMAIL_QUEUE"
+	//test remove
 
 	CloudfunctionSourceDir = "serverless_function_source_code"
 )
