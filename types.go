@@ -231,15 +231,15 @@ func (wd *WatchDetail) GetChangePercentDesc() string {
 		previousDay := wd.History.Eods[1]
 		lastClose := lastDay.PriceClose
 		previousClose := previousDay.PriceClose
-		changePercent := getPercent(previousClose, lastClose)
-		return GetPercentDesc(changePercent)
+		percentChange := getPercentChange(previousClose, lastClose)
+		return GetPercentDesc(percentChange)
 	}
 
 	Log(fmt.Sprintf("Could not get percent change from watchdetail %v", wd))
 	return ""
 }
 
-func getPercent(one Decimal, two Decimal) Decimal {
+func getPercentChange(one Decimal, two Decimal) Decimal {
 	change := one.Sub(two)
 	ratio := change.Div(one)
 	return ratio.Mul(NewFromInt(100))
@@ -263,8 +263,8 @@ func (wd *WatchDetail) GetDtReferenceDesc() string {
 
 func (wd *WatchDetail) GetDeltaReferencePercentDesc() string {
 	priceStartWatch := wd.Watch.AddedPriceBuy
-	priceChange := priceStartWatch.Sub(wd.GetPriceLastClose())
-	percent := getPercent(priceStartWatch, priceChange)
+	priceLastClose := wd.GetPriceLastClose()
+	percent := getPercentChange(priceStartWatch, priceLastClose)
 	return GetPercentDesc(percent)
 }
 
