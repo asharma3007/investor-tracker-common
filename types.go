@@ -7,7 +7,6 @@ import (
 	. "github.com/shopspring/decimal"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -20,8 +19,8 @@ const (
 	EnvSecretDbUser     = "SECRET_DATABASE_USER"
 	EnvSecretDbPassword = "SECRET_DATABASE_PASSWORD"
 
-	EnvTokenMarketStack = "TOKEN_MARKETSTACK"
-	EnvTokenIex         = "TOKEN_IEX"
+	EnvSecretTokenMarketStack = "SECRET_TOKEN_MARKETSTACK"
+	EnvSecretTokenIex         = "SECRET_TOKEN_IEX"
 
 	PriceTypeSell = 0
 	PriceTypeBuy = 1
@@ -355,9 +354,11 @@ func (stock *Stock) getMarketStackUrl() string {
 	todayStr := today.Format("2006-01-02")
 	weekAgoStr := weekAgo.Format("2006-01-02")
 
+	token := GetSecret(EnvSecretTokenMarketStack)
+
 	return fmt.Sprintf("http://api.marketstack.com/v1/eod?symbols=%v&access_key=%v&date_from=%v&date_to=%v",
 		stock.Symbol,
-		os.Getenv(EnvTokenMarketStack),
+		token,
 		weekAgoStr,
 		todayStr)
 }
@@ -564,6 +565,6 @@ func (stock *Stock) populateFromMarketStack() {
 }
 
 func getIexUrl(stock Stock) string {
-	return fmt.Sprintf("https://cloud.iexapis.com/stable/stock/%v/quote?token=%v", stock.Symbol, os.Getenv(EnvTokenIex))
+	return fmt.Sprintf("https://cloud.iexapis.com/stable/stock/%v/quote?token=%v", stock.Symbol, "token")
 }
 
