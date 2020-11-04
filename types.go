@@ -130,19 +130,24 @@ func (stock Stock) GetRelevantPrice(instruction MonitorInstruction) Decimal {
 	}
 }
 
-func (lot Lot) GetValueTotal() Decimal {
+func (lot Lot) GetValueTotalBought() Decimal {
 	return lot.PriceBought.Mul(lot.Units)
 }
 
-func (holding Holding) GetPriceAverage() Decimal {
-	totalValue := NewFromInt(0)
-	for _, lot := range holding.Lots {
-		lotValue := lot.GetValueTotal()
-		totalValue = totalValue.Add(lotValue)
-	}
+func (holding Holding) GetPriceAverageBought() Decimal {
+	totalValue := holding.GetValueTotalBought()
 
 	totalUnits := holding.GetUnitsTotal()
 	return totalValue.Div(totalUnits)
+}
+
+func (holding *Holding) GetValueTotalBought() Decimal {
+	totalValue := NewFromInt(0)
+	for _, lot := range holding.Lots {
+		lotValue := lot.GetValueTotalBought()
+		totalValue = totalValue.Add(lotValue)
+	}
+	return totalValue
 }
 
 type WatchDetail struct {
