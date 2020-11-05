@@ -59,6 +59,19 @@ func GetSecretsClient() *secretmanager.Client {
 
 func GetSecret(envSecretName string) string {
 	secretName := os.Getenv(envSecretName)
+
+	if os.Getenv("LOCAL") == "1" {
+		return getSecretLocal(secretName)
+	} else {
+		return getSecret(secretName)
+	}
+}
+
+func getSecretLocal(secretName string) string {
+	return os.Getenv(secretName)
+}
+
+func getSecret(secretName string) string {
 	client := GetSecretsClient()
 
 	accessRequest := &secretmanagerpb.AccessSecretVersionRequest{
