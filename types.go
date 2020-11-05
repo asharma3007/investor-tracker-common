@@ -239,8 +239,15 @@ func (wd *WatchDetail) GetChangePercentDesc() string {
 }
 
 func getPercentChange(one Decimal, two Decimal) Decimal {
+	Log("***one " + one.String() + "two " + two.String())
+
 	change := one.Sub(two)
+
+	Log("***Change " + change.String())
 	ratio := change.Div(one)
+
+	Log("***ratio " + ratio.String())
+
 	return ratio.Mul(NewFromInt(100))
 }
 
@@ -261,8 +268,17 @@ func (wd *WatchDetail) GetDtReferenceDesc() string {
 }
 
 func (wd *WatchDetail) GetDeltaReferencePercentDesc() string {
+
+	Log("***Stock " + wd.Stock.Description)
+
 	priceStartWatch := wd.Watch.AddedPriceBuy
+
+	Log("***AddedPriceBuy " + wd.Watch.AddedPriceBuy.String() + " priceStartWatch " + priceStartWatch.String())
+
 	priceLastClose := wd.GetPriceLastClose()
+
+	Log("*** priceLastClose " + priceLastClose.String())
+
 	percent := getPercentChange(priceStartWatch, priceLastClose)
 	return GetPercentDesc(percent)
 }
