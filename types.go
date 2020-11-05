@@ -167,7 +167,7 @@ type Watch struct {
 }
 
 func (wd *WatchDetail) GetPriceLastCloseDesc() string {
-	priceLastClose := wd.GetPriceLastClose()
+	priceLastClose := wd.GetPriceLastClosePounds()
 	if priceLastClose.IsNegative() { return "No price history"}
 
 	return GetPriceDesc(priceLastClose)
@@ -198,7 +198,7 @@ type watchDetailIex struct {
 }
 
 func (eod *EodMarketStack) GetPriceCloseDesc() string {
-	return GetPriceDesc(eod.PriceClose)
+	return GetPriceDesc(eod.PriceClosePounds)
 }
 
 func GetPriceDesc(price Decimal) string {
@@ -211,7 +211,7 @@ func (wd *WatchDetail) GetPricePreviousCloseDesc() string {
 	}
 
 	previousDay := wd.History.Eods[1]
-	previousClose := previousDay.PriceClose
+	previousClose := previousDay.PriceClosePounds
 
 	return fmt.Sprintf("%v", convertPenceToPounds(previousClose))
 }
@@ -228,8 +228,8 @@ func (wd *WatchDetail) GetChangePercentDesc() string {
 	if len(wd.History.Eods) > 1 {
 		lastDay := wd.History.Eods[0]
 		previousDay := wd.History.Eods[1]
-		lastClose := lastDay.PriceClose
-		previousClose := previousDay.PriceClose
+		lastClose := lastDay.PriceClosePounds
+		previousClose := previousDay.PriceClosePounds
 		percentChange := getPercentChange(previousClose, lastClose)
 		return GetPercentDesc(percentChange)
 	}
@@ -238,13 +238,13 @@ func (wd *WatchDetail) GetChangePercentDesc() string {
 	return ""
 }
 
-func getPercentChange(one Decimal, two Decimal) Decimal {
-	Log("***one " + one.String() + "two " + two.String())
+func getPercentChange(was Decimal, is Decimal) Decimal {
+	Log("***was " + was.String() + "is " + is.String())
 
-	change := one.Sub(two)
+	change := is.Sub(was)
 
 	Log("***Change " + change.String())
-	ratio := change.Div(one)
+	ratio := change.Div(was)
 
 	Log("***ratio " + ratio.String())
 
@@ -275,7 +275,7 @@ func (wd *WatchDetail) GetDeltaReferencePercentDesc() string {
 
 	Log("***AddedPriceBuy " + wd.Watch.AddedPriceBuy.String() + " priceStartWatch " + priceStartWatch.String())
 
-	priceLastClose := wd.GetPriceLastClose()
+	priceLastClose := wd.GetPriceLastClosePence()
 
 	Log("*** priceLastClose " + priceLastClose.String())
 
@@ -288,8 +288,12 @@ type PriceHistory struct {
 }
 
 type EodMarketStack struct {
-	Date timeMarketStack `json:"date"`
-	PriceClose Decimal `json:"close"`
+	Date             timeMarketStack `json:"date"`
+	PriceClosePounds Decimal         `json:"close"`
+}
+
+func (eod *EodMarketStack) GetPriceClosePence() Decimal {
+	return eod.PriceClosePounds.Mul(NewFromInt(100))
 }
 
 type timeMarketStack struct {
@@ -316,11 +320,15 @@ func (transaction Transaction) IsSell() bool {
 }
 
 
-func (wd *WatchDetail) GetPriceLastClose() Decimal {
+func (wd *WatchDetail) GetPriceLastClosePounds() Decimal {
 	if len(wd.History.Eods) == 0 { return NewFromInt(-1) }
 
 	lastEod := wd.History.Eods[0]
-	return lastEod.PriceClose
+	return lastEod.PriceClosePounds
+}
+
+func (wd *WatchDetail) GetPriceLastClosePence() Decimal {
+	return wd.GetPriceLastClosePounds().Mul(NewFromInt(100))
 }
 
 type ResponseMarketStack struct {
@@ -466,8 +474,8 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 		History: PriceHistory{
 			Eods: []EodMarketStack {
 				{
-					Date:       timeMarketStack{time.Now()},
-					PriceClose: parsePrice(priceSellStr),
+					Date:             timeMarketStack{time.Now()},
+					PriceClosePounds: parsePrice(priceSellStr),
 				},
 			},
 		},
@@ -576,8 +584,8 @@ func parsePrice(priceStr string) Decimal {
 func (stock *Stock) populateFromMarketStack() {
 	var httpClient DefaultHttp
 	watchDetail := BuildWatchDetailMarketStack(&httpClient, *stock)
-	stock.PriceBuy = watchDetail.GetPriceLastClose()
-	stock.PriceSell = watchDetail.GetPriceLastClose()
+	stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
+	stock.PriceSell = watchDetail.GetPriceLastClosePounds()
 }
 
 func getIexUrl(stock Stock) string {
