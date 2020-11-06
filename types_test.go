@@ -117,6 +117,7 @@ func TestGetDeltaReferencePercentDesc(t *testing.T) {
 	}
 
 	//test loss
+	//remove remove // TODO: Ankit: REMOVE
 	detail.Watch.AddedPriceBuy, _ = NewFromString("45000") //was
 	actual = detail.GetDeltaReferencePercentDesc() //is 434.0
 	expected = "-3.556 %"
