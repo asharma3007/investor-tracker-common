@@ -331,19 +331,6 @@ func (wd *WatchDetail) GetPriceLastClosePence() Decimal {
 	return wd.GetPriceLastClosePounds().Mul(NewFromInt(100))
 }
 
-type ResponseMarketStack struct {
-	Pagination Pagination // `json:"pagination"`
-	Data []EodMarketStack `json:"data"`
-}
-
-type Pagination struct {
-	Limit int
-	Offset int
-	Count int
-	Total int
-}
-
-
 func (stock *Stock) GetPriceUrl() string {
 	if stock.IsSourceHl() {
 		return stock.getHlUrl()
