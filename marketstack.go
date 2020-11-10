@@ -99,6 +99,10 @@ func (eod *EodMarketStack) GetPriceClosePence() Decimal {
 	return eod.PriceClosePounds.Mul(NewFromInt(100))
 }
 
+func (eod *EodMarketStack) Dump() {
+	LogDebug(eod.Date.Format("06 Jan 02") + " " + eod.PriceClosePounds.String())
+}
+
 type timeMarketStack struct {
 	time.Time
 }
