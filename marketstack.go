@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"time"
+	. "github.com/shopspring/decimal"
 )
 
 const (
@@ -79,4 +80,36 @@ func QueryEndOfDayMarketStack(client HttpSource, request RequestEndOfDay) Respon
 	CheckError(err)
 
 	return retval
+}
+
+func (eod *EodMarketStack) GetPriceCloseDesc() string {
+	return GetPriceDesc(eod.PriceClosePounds)
+}
+
+type PriceHistory struct {
+	Eods []EodMarketStack
+}
+
+type EodMarketStack struct {
+	Date             timeMarketStack `json:"date"`
+	PriceClosePounds Decimal         `json:"close"`
+}
+
+func (eod *EodMarketStack) GetPriceClosePence() Decimal {
+	return eod.PriceClosePounds.Mul(NewFromInt(100))
+}
+
+type timeMarketStack struct {
+	time.Time
+}
+
+const TimeFormatMarketStack = "2006-01-02T03:04:05+0000"
+
+func (t *timeMarketStack) UnmarshalJSON(buf []byte) error {
+	tt, err := time.Parse(TimeFormatMarketStack, strings.Trim(string(buf), `"`))
+	if err != nil {
+		return err
+	}
+	t.Time = tt
+	return nil
 }
