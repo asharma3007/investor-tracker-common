@@ -29,11 +29,12 @@ func (request *RequestEndOfDay) getUrl() string {
 
 	token := GetSecret(EnvSecretTokenMarketStack)
 
-	return fmt.Sprintf("http://api.marketstack.com/v1/eod?symbols=%v&access_key=%v&date_from=%v&date_to=%v",
+	return fmt.Sprintf("http://api.marketstack.com/v1/eod?symbols=%v&access_key=%v&date_from=%v&date_to=%v&limit=%v",
 		symbols,
 		token,
 		dateFromStr,
-		dateToStr)
+		dateToStr,
+		request.Limit)
 }
 
 type RequestCommon struct {
