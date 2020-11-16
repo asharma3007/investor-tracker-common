@@ -13,6 +13,8 @@ import (
 	"os"
 )
 
+//connect without VPC connector https://cloud.google.com/sql/docs/mysql/connect-functions#go
+
 const (
 	EnvUrlEmailQueue 	= "URL_EMAIL_QUEUE"
 	//test remove

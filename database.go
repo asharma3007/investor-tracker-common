@@ -6,23 +6,40 @@ import (
 	"os"
 )
 
+type dbOptions struct {
+	Url       string
+	User      string
+	Password  string
+	Port      string
+	DbName    string
+	PrivateIp string
+	ConnectionName string
+}
+
+func getDbOptions() dbOptions {
+	return dbOptions{
+		Url:      os.Getenv(EnvDatabaseUrl),
+		User:     GetSecret(EnvSecretDbUser),
+		DbName:   os.Getenv(EnvDatabaseName),
+		Password: GetSecret(EnvSecretDbPassword),
+		Port:     os.Getenv(EnvDatabasePort),
+		PrivateIp:	os.Getenv(EnvDatabasePrivateIp),
+		ConnectionName: os.Getenv(EnvDatabaseConnectionName),
+	}
+}
+
 func ConnectDb() *sql.DB {
 	Log("Connecting to db")
 
-	dbUrl := os.Getenv(EnvDatabaseUrl)
-	port := os.Getenv(EnvDatabasePort)
-	dbname := os.Getenv(EnvDatabaseName)
-
-	user := GetSecret(EnvSecretDbUser)
-	password := GetSecret(EnvSecretDbPassword)
+	options := getDbOptions()
 
 	Log("Connection string")
 	// connection string
-	mysqlconn := user + ":" + password + "@tcp(" + dbUrl + ":" + port +")/" + dbname
+	connectString := getConnectionString(options)
 
 	Log("Opening db")
 	// open database
-	db, err := sql.Open("mysql", mysqlconn)
+	db, err := sql.Open("mysql", connectString)
 	CheckError(err)
 
 	Log("Doing ping")
@@ -33,4 +50,32 @@ func ConnectDb() *sql.DB {
 	fmt.Println("Connected!")
 
 	return db
+}
+
+func getConnectionString(options dbOptions) string {
+	if options.PrivateIp == "1" {
+		return getConnectionStringDirect(options)
+	} else {
+		return getConnectionStringSocket(options)
+	}
+}
+
+func getConnectionStringDirect(options dbOptions) string {
+	return  options.User + ":" + options.Password + "@tcp(" + options.Url + ":" + options.Port +")/" + options.DbName
+}
+
+func getConnectionStringSocket(options dbOptions) string {
+	socketDir, isSet := os.LookupEnv("DB_SOCKET_DIR")
+	if !isSet {
+		socketDir = "/cloudsql"
+	}
+
+	var dbURI string
+	dbURI = fmt.Sprintf("%s:%s@unix(/%s/%s)/%s?parseTime=true", options.User, options.Password, socketDir, options.ConnectionName, options.DbName)
+
+	// dbPool is the pool of database connections.
+	_, err := sql.Open("mysql", dbURI)
+	CheckError(fmt.Errorf("sql.Open: %v", err))
+
+	return dbURI
 }
