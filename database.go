@@ -74,8 +74,8 @@ func getConnectionStringSocket(options dbOptions) string {
 	dbURI = fmt.Sprintf("%s:%s@unix(/%s/%s)/%s?parseTime=true", options.User, options.Password, socketDir, options.ConnectionName, options.DbName)
 
 	// dbPool is the pool of database connections.
-	_, err := sql.Open("mysql", dbURI)
-	CheckError(fmt.Errorf("sql.Open: %v", err))
+	//_, err := sql.Open("mysql", dbURI)
+	//CheckError(fmt.Errorf("sql.Open: %v", err))
 
 	return dbURI
 }
