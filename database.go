@@ -67,7 +67,7 @@ func getConnectionStringDirect(options dbOptions) string {
 func getConnectionStringSocket(options dbOptions) string {
 	socketDir, isSet := os.LookupEnv("DB_SOCKET_DIR")
 	if !isSet {
-		socketDir = "/cloudsql"
+		socketDir = "cloudsql"
 	}
 
 	var dbURI string
