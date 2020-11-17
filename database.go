@@ -70,6 +70,8 @@ func getConnectionStringSocket(options dbOptions) string {
 		socketDir = "cloudsql"
 	}
 
+	fmt.Sprintf("user %v socket %v conx %v db %v", options.User, socketDir, options.ConnectionName, options.DbName)
+
 	var dbURI string
 	dbURI = fmt.Sprintf("%s:%s@unix(/%s/%s)/%s?parseTime=true", options.User, options.Password, socketDir, options.ConnectionName, options.DbName)
 
