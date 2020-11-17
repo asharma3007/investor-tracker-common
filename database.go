@@ -24,7 +24,7 @@ func getDbOptions() dbOptions {
 		Password: GetSecret(EnvSecretDbPassword),
 		Port:     os.Getenv(EnvDatabasePort),
 		PrivateIp:	os.Getenv(EnvDatabasePrivateIp),
-		ConnectionName: os.Getenv(EnvDatabaseConnectionName),
+		ConnectionName: os.Getenv(EnvSecretDatabaseConnectionName),
 	}
 }
 
