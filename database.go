@@ -39,6 +39,7 @@ func ConnectDb() *sql.DB {
 
 	Log("Opening db")
 	// open database
+	//Access denied for user 'trackerapp'@'cloudsqlproxy~107.178.231.18' (using password: YES)
 	db, err := sql.Open("mysql", connectString)
 	CheckError(err)
 

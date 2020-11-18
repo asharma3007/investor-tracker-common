@@ -255,12 +255,17 @@ func GetPercentDesc(percent Decimal) string {
 
 const TimeFormatMySql = "2006-01-02 15:04:05"
 const TimeFormatPostGres = time.RFC3339Nano
+const TimeFormatUnknown = "2006-01-02T15:04:05Z"
 
 func (wd *WatchDetail) GetDtReferenceDesc() string {
 	//postgres
 	//parse, err := time.Parse(TimeFormatPostGres, wd.Watch.DtReference)
 	//mysql
 	parse, err := time.Parse(TimeFormatMySql, wd.Watch.DtReference)
+	if err != nil {
+		parse, err = time.Parse(TimeFormatUnknown, wd.Watch.DtReference)
+	}
+
 	CheckError(err)
 	return parse.Format(time.RFC822)
 }
