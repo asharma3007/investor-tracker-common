@@ -22,7 +22,7 @@ type RequestEndOfDay struct {
 	Offset int
 }
 
-func (request *RequestEndOfDay) getUrl() string {
+func (request *RequestEndOfDay) GetUrl() string {
 	symbols := strings.Join(request.Symbols, ",")
 	dateFromStr := request.DateFrom.Format(TimeFormatRequest)
 	dateToStr := request.DateTo.Format(TimeFormatRequest)
@@ -55,7 +55,7 @@ type Pagination struct {
 
 func QueryEndOfDayMarketStack(client HttpSource, request RequestEndOfDay) ResponseMarketStack {
 
-	url := request.getUrl()
+	url := request.GetUrl()
 
 	log := fmt.Sprintf("Getting price history for %v from URL: %v", request.Symbols, url)
 	Log(log)

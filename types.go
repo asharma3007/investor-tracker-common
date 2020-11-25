@@ -20,6 +20,7 @@ const (
 	EnvSecretDbUser                 = "SECRET_DATABASE_USER"
 	EnvSecretDbPassword             = "SECRET_DATABASE_PASSWORD"
 	EnvSecretDatabaseConnectionName = "SECRET_DATABASE_CONNECTION"
+	EnvSecretMyApiKey				= "SECRET_MY_API_KEY"
 
 	EnvSecretTokenMarketStack = "SECRET_TOKEN_MARKETSTACK"
 	EnvSecretTokenIex         = "SECRET_TOKEN_IEX"
