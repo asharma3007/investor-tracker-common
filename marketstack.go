@@ -3,10 +3,10 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	. "github.com/shopspring/decimal"
 	"io/ioutil"
 	"strings"
 	"time"
-	. "github.com/shopspring/decimal"
 )
 
 const (

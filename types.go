@@ -421,13 +421,13 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 	CheckError(err)
 
 	if len(priceSellStr) == 0 || len(priceSellStr) == 0 {
-		Log("Failed to get a price for stock")
+		Log("Failed to get a price for stock " + stock.Description)
 		message := fmt.Sprint(stock.Description, " Url: ", stock.Url, " Buy ", priceBuyStr, " Sell ", priceSellStr)
 		Log(message)
 	}
 
 	if len(percentChangeStr) == 0 {
-		Log("Failed to get a percent change for stock")
+		Log("Failed to get a percent change for stock " + stock.Description)
 		message := fmt.Sprint(stock.Description, " Url: ", stock.Url, " String ", percentChangeStr)
 		Log(message)
 	}
@@ -512,7 +512,7 @@ func (stock *Stock) populateFromHl() {
 	CheckError(err)
 
 	if len(priceSellStr) == 0 || len(priceSellStr) == 0 {
-		Log("Failed to get a price for stock")
+		Log("Failed to get a price for stock " + stock.HlName)
 		message := fmt.Sprint(stock.HlName, " Url: ", fullUrl, " Buy ", priceBuyStr, " Sell ", priceSellStr)
 		Log(message)
 	}
