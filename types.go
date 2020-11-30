@@ -446,7 +446,7 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 }
 
 func BuildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
-	log := fmt.Sprintf("Getting price history for %v from URL: %v", stock.ToString(), stock.Url)
+	log := fmt.Sprintf("BuildWatchDetailMarketStack price history for %v from URL: %v", stock.ToString(), stock.Url)
 	Log(log)
 
 	response, err := client.HttpGet(stock.Url)
@@ -512,7 +512,7 @@ func (stock *Stock) populateFromHl() {
 	CheckError(err)
 
 	if len(priceSellStr) == 0 || len(priceSellStr) == 0 {
-		Log("Failed to get a price for stock " + stock.HlName)
+		Log("Failed to get an HL price for stock " + stock.HlName)
 		message := fmt.Sprint(stock.HlName, " Url: ", fullUrl, " Buy ", priceBuyStr, " Sell ", priceSellStr)
 		Log(message)
 	}
@@ -549,6 +549,18 @@ func (stock *Stock) populateFromMarketStack() {
 	watchDetail := BuildWatchDetailMarketStack(&httpClient, *stock)
 	stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
 	stock.PriceSell = watchDetail.GetPriceLastClosePounds()
+
+	if stock.PriceBuy.String() == "0" {
+		Log("Marketstack failed to get buy price for " + stock.Description + " from " + stock.Url)
+		wdJson, _ := json.Marshal(watchDetail)
+		Log(string(wdJson))
+	}
+
+	if stock.PriceSell.String() == "0" {
+		Log("Marketstack failed to get sell price for " + stock.Description + " from " + stock.Url)
+		wdJson, _ := json.Marshal(watchDetail)
+		Log(string(wdJson))
+	}
 }
 
 func getIexUrl(stock Stock) string {

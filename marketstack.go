@@ -57,7 +57,7 @@ func QueryEndOfDayMarketStack(client HttpSource, request RequestEndOfDay) Respon
 
 	url := request.GetUrl()
 
-	log := fmt.Sprintf("Getting price history for %v from URL: %v", request.Symbols, url)
+	log := fmt.Sprintf("QueryEndOfDayMarketStack price history for %v from URL: %v", request.Symbols, url)
 	Log(log)
 
 	response, err := client.HttpGet(url)
