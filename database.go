@@ -1,9 +1,16 @@
 package common
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type dbOptions struct {
@@ -81,4 +88,27 @@ func getConnectionStringSocket(options dbOptions) string {
 	//CheckError(fmt.Errorf("sql.Open: %v", err))
 
 	return dbURI
+}
+
+
+func ConnectDbMongo() (*mongo.Client, *mongo.Database) {
+	dbClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	CheckError(err)
+
+	context, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err = dbClient.Connect(context)
+	CheckError(err)
+
+	err = dbClient.Ping(context, readpref.Primary())
+	CheckError(err)
+
+	databases, err := dbClient.ListDatabaseNames(context, bson.M{})
+	CheckError(err)
+
+	fmt.Println(databases)
+
+	database := dbClient.Database("globetrotter")
+	//collectionUserData = database.Collection("UserData")
+
+	return dbClient, database
 }
