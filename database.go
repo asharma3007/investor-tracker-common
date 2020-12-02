@@ -131,6 +131,6 @@ func ConnectDbMongo() (*mongo.Client, *mongo.Database) {
 
 	fmt.Println(databases)
 
-	database := dbClient.Database("globetrotter")
+	database := dbClient.Database(dbName)
 	return dbClient, database
 }
