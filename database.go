@@ -90,12 +90,36 @@ func getConnectionStringSocket(options dbOptions) string {
 	return dbURI
 }
 
+func DisconnectMongoDb(dbClient *mongo.Client) {
+	dbClient.Disconnect(context.TODO())
+}
+
+
+//import "go.mongodb.org/mongo-driver/mongo"
+//
+//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+//defer cancel()
+//client, err := mongo.Connect(ctx, options.Client().ApplyURI(
+//"mongodb+srv://admin:<password>@tracker-mongo.3dzjg.mongodb.net/<dbname>?retryWrites=true&w=majority",
+//))
+//if err != nil { log.Fatal(err) }
+
 
 func ConnectDbMongo() (*mongo.Client, *mongo.Database) {
-	dbClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
-	CheckError(err)
+
+	dbUrl := os.Getenv("MONGO_URL")
+	dbPassword := os.Getenv("MONGO_PASSWORD")
+	dbName := os.Getenv("MONGO_DBNAME")
+	dbUser := os.Getenv("MONGO_USER")
 
 	context, _ := context.WithTimeout(context.Background(), 10*time.Second)
+
+	//dbClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	//"mongodb+srv://admin:<password>@tracker-mongo.3dzjg.mongodb.net/<dbname>?retryWrites=true&w=majority"
+	uri := fmt.Sprintf("mongodb+srv://%v:%v@%v/%v?retryWrites=true&w=majority", dbUser, dbPassword, dbUrl, dbName)
+	dbClient, err := mongo.NewClient(options.Client().ApplyURI(uri))
+	CheckError(err)
+
 	err = dbClient.Connect(context)
 	CheckError(err)
 
@@ -108,7 +132,5 @@ func ConnectDbMongo() (*mongo.Client, *mongo.Database) {
 	fmt.Println(databases)
 
 	database := dbClient.Database("globetrotter")
-	//collectionUserData = database.Collection("UserData")
-
 	return dbClient, database
 }
