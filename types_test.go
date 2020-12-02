@@ -124,3 +124,7 @@ func TestGetDeltaReferencePercentDesc(t *testing.T) {
 		t.Errorf("Expected %v Actual %v", expected, actual)
 	}
 }
+
+func TestStock_PopulateCurrentPrice(t *testing.T) {
+
+}

@@ -547,8 +547,8 @@ func parsePrice(priceStr string) Decimal {
 func (stock *Stock) populateFromMarketStack() {
 	var httpClient DefaultHttp
 	watchDetail := BuildWatchDetailMarketStack(&httpClient, *stock)
-	stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
-	stock.PriceSell = watchDetail.GetPriceLastClosePounds()
+	stock.PriceBuy = watchDetail.GetPriceLastClosePence()
+	stock.PriceSell = watchDetail.GetPriceLastClosePence()
 
 	if stock.PriceBuy.String() == "0" {
 		Log("Marketstack failed to get buy price for " + stock.Description + " from " + stock.Url)
