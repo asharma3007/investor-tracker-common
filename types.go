@@ -33,7 +33,7 @@ type Stock struct {
 	StockId int `bson:"-"`
 	Description string
 	HlName    string
-	HlUrlOverride string `json:"UrlOverride"` `bson:"UrlOverride"`
+	HlUrlOverride string `json:"UrlOverride" bson:"UrlOverride"`
 	Symbol string
 
 	Url       string `bson:"-"`
