@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/shopspring/decimal"
+	"go.mongodb.org/mongo-driver/bson"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -46,6 +47,50 @@ func (stock *Stock) GetDisplayName() string {
 		return stock.HlName
 	} else {
 		return stock.Description
+	}
+}
+
+// GetBSON implements bson.Getter.
+func (s Stock) GetBSON() (interface{}, error) {
+	stringBuy := s.PriceBuy.String()
+	stringSell := s.PriceSell.String()
+	return struct {
+		StockId int
+		Description string
+		PriceBuy        string
+		PriceSell string
+	}{
+		StockId:        s.StockId,
+		Description: s.Description,
+		PriceBuy: stringBuy,
+		PriceSell: stringSell,
+	}, nil
+}
+
+// SetBSON implements bson.Setter.
+func (s *Stock) SetBSON(raw bson.Raw) error {
+
+	decoded := new(struct {
+		StockId int
+		Description string
+		PriceBuy string
+		PriceSell string
+	})
+
+	//bsonErr := raw.Unmarshal(decoded)
+	bsonErr := bson.Unmarshal(raw, decoded)
+
+	buyDec, _ := NewFromString(decoded.PriceBuy)
+	sellDec, _ := NewFromString(decoded.PriceBuy)
+
+	if bsonErr == nil {
+		s.StockId = decoded.StockId
+		s.Description = decoded.Description
+		s.PriceBuy = buyDec
+		s.PriceSell = sellDec
+		return nil
+	} else {
+		return bsonErr
 	}
 }
 
