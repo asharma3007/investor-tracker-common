@@ -30,10 +30,12 @@ const (
 )
 
 type Stock struct {
+	StockId int
 	Description string
-	Symbol string
 	HlName    string
 	HlUrlOverride string
+	Symbol string
+
 	Url       string
 	PriceBuy  Decimal
 	PriceSell Decimal

@@ -94,17 +94,6 @@ func DisconnectMongoDb(dbClient *mongo.Client) {
 	dbClient.Disconnect(context.TODO())
 }
 
-
-//import "go.mongodb.org/mongo-driver/mongo"
-//
-//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-//defer cancel()
-//client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-//"mongodb+srv://admin:<password>@tracker-mongo.3dzjg.mongodb.net/<dbname>?retryWrites=true&w=majority",
-//))
-//if err != nil { log.Fatal(err) }
-
-
 func ConnectDbMongo() (*mongo.Client, *mongo.Database) {
 
 	dbUrl := os.Getenv("MONGO_URL")
