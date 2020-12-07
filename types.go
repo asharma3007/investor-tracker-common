@@ -30,10 +30,10 @@ const (
 )
 
 type Stock struct {
-	StockId int
+	StockId int `bson:"-"`
 	Description string
 	HlName    string
-	HlUrlOverride string
+	HlUrlOverride string `json:"UrlOverride"` `bson:"UrlOverride"`
 	Symbol string
 
 	Url       string `bson:"-"`
@@ -116,12 +116,17 @@ type Lot struct {
 }
 
 type Transaction struct {
-	TransactionId int
+	TransactionId int `bson:"-"`
 	StockId int
 	DtTrade string
+	DtSettlement string
 	UnitPrice Decimal
 	Units Decimal
 	ValueQuoted Decimal
+
+	Description string
+	Reference string
+	AccountId int
 }
 
 func (stock Stock) ToString() string {
@@ -208,13 +213,17 @@ type WatchDetail struct {
 }
 
 type Watch struct {
-	WatchId        int
+	WatchId        int `bson:"-"`
 	StockId        int
 	DtReference    string
 	AddedPriceBuy  Decimal
 	AddedPriceSell Decimal
 	AlertThreshold Decimal
 	Notes		   string
+
+	DtAdded string
+	WatchType int
+	DtStop string
 }
 
 func (wd *WatchDetail) GetPriceLastCloseDesc() string {
@@ -621,3 +630,7 @@ func getIexUrl(stock Stock) string {
 	return fmt.Sprintf("https://cloud.iexapis.com/stable/stock/%v/quote?token=%v", stock.Symbol, "token")
 }
 
+type Account struct {
+	AccountId int
+	AccountName string
+}
