@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/shopspring/decimal"
-	"go.mongodb.org/mongo-driver/bson"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -37,9 +36,9 @@ type Stock struct {
 	HlUrlOverride string
 	Symbol string
 
-	Url       string
-	PriceBuy  Decimal
-	PriceSell Decimal
+	Url       string `bson:"-"`
+	PriceBuy  Decimal `bson:"-"`
+	PriceSell Decimal `bson:"-"`
 }
 
 func (stock *Stock) GetDisplayName() string {
@@ -50,49 +49,51 @@ func (stock *Stock) GetDisplayName() string {
 	}
 }
 
+
+//https://stackoverflow.com/questions/30891301/handling-custom-bson-marshaling
 // GetBSON implements bson.Getter.
-func (s Stock) GetBSON() (interface{}, error) {
-	stringBuy := s.PriceBuy.String()
-	stringSell := s.PriceSell.String()
-	return struct {
-		StockId int
-		Description string
-		PriceBuy        string
-		PriceSell string
-	}{
-		StockId:        s.StockId,
-		Description: s.Description,
-		PriceBuy: stringBuy,
-		PriceSell: stringSell,
-	}, nil
-}
+//func (s Stock) GetBSON() (interface{}, error) {
+//	stringBuy := s.PriceBuy.String()
+//	stringSell := s.PriceSell.String()
+//	return struct {
+//		StockId int
+//		Description string
+//		PriceBuy        string
+//		PriceSell string
+//	}{
+//		StockId:        s.StockId,
+//		Description: s.Description,
+//		PriceBuy: stringBuy,
+//		PriceSell: stringSell,
+//	}, nil
+//}
 
 // SetBSON implements bson.Setter.
-func (s *Stock) SetBSON(raw bson.Raw) error {
-
-	decoded := new(struct {
-		StockId int
-		Description string
-		PriceBuy string
-		PriceSell string
-	})
-
-	//bsonErr := raw.Unmarshal(decoded)
-	bsonErr := bson.Unmarshal(raw, decoded)
-
-	buyDec, _ := NewFromString(decoded.PriceBuy)
-	sellDec, _ := NewFromString(decoded.PriceBuy)
-
-	if bsonErr == nil {
-		s.StockId = decoded.StockId
-		s.Description = decoded.Description
-		s.PriceBuy = buyDec
-		s.PriceSell = sellDec
-		return nil
-	} else {
-		return bsonErr
-	}
-}
+//func (s *Stock) SetBSON(raw bson.Raw) error {
+//
+//	decoded := new(struct {
+//		StockId int
+//		Description string
+//		PriceBuy string
+//		PriceSell string
+//	})
+//
+//	//bsonErr := raw.Unmarshal(decoded)
+//	bsonErr := bson.Unmarshal(raw, decoded)
+//
+//	buyDec, _ := NewFromString(decoded.PriceBuy)
+//	sellDec, _ := NewFromString(decoded.PriceBuy)
+//
+//	if bsonErr == nil {
+//		s.StockId = decoded.StockId
+//		s.Description = decoded.Description
+//		s.PriceBuy = buyDec
+//		s.PriceSell = sellDec
+//		return nil
+//	} else {
+//		return bsonErr
+//	}
+//}
 
 type MessageSendEmail struct {
 	Html string
