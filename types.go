@@ -102,13 +102,13 @@ type MessageSendEmail struct {
 }
 
 type Holding struct {
-	StockId      int
+	StockId      string
 	Lots         []Lot
 	Transactions []Transaction
 }
 
 type Lot struct {
-	StockId     int
+	StockId     string
 	PriceBought Decimal
 	Units       Decimal
 	Transaction Transaction
@@ -116,7 +116,7 @@ type Lot struct {
 
 type Transaction struct {
 	TransactionId int `bson:"-"`
-	StockId       int
+	StockId       string
 	DtTrade       string
 	DtSettlement  string
 	UnitPrice     Decimal
@@ -143,7 +143,7 @@ type Alert struct {
 }
 
 type MonitorInstruction struct {
-	StockId            int
+	StockId            string
 	PriceTypeToMonitor int
 	MarkerPrice        Decimal
 	Message            string
@@ -212,7 +212,7 @@ type WatchDetail struct {
 
 type Watch struct {
 	WatchId        int `bson:"-"`
-	StockId        int
+	StockId        string
 	DtReference    string
 	AddedPriceBuy  Decimal
 	AddedPriceSell Decimal
