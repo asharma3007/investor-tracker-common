@@ -20,23 +20,23 @@ const (
 	EnvSecretDbUser                 = "SECRET_DATABASE_USER"
 	EnvSecretDbPassword             = "SECRET_DATABASE_PASSWORD"
 	EnvSecretDatabaseConnectionName = "SECRET_DATABASE_CONNECTION"
-	EnvSecretMyApiKey				= "SECRET_MY_API_KEY"
+	EnvSecretMyApiKey               = "SECRET_MY_API_KEY"
 
 	EnvSecretTokenMarketStack = "SECRET_TOKEN_MARKETSTACK"
 	EnvSecretTokenIex         = "SECRET_TOKEN_IEX"
 
 	PriceTypeSell = 0
-	PriceTypeBuy = 1
+	PriceTypeBuy  = 1
 )
 
 type Stock struct {
-	StockId int `bson:"-"`
-	Description string
-	HlName    string
+	StockId       int `bson:"-"`
+	Description   string
+	HlName        string
 	HlUrlOverride string `json:"UrlOverride" bson:"UrlOverride"`
-	Symbol string
+	Symbol        string
 
-	Url       string `bson:"-"`
+	Url       string  `bson:"-"`
 	PriceBuy  Decimal `bson:"-"`
 	PriceSell Decimal `bson:"-"`
 }
@@ -48,7 +48,6 @@ func (stock *Stock) GetDisplayName() string {
 		return stock.Description
 	}
 }
-
 
 //https://stackoverflow.com/questions/30891301/handling-custom-bson-marshaling
 // GetBSON implements bson.Getter.
@@ -96,10 +95,10 @@ func (stock *Stock) GetDisplayName() string {
 //}
 
 type MessageSendEmail struct {
-	Html string
-	PlainText string
+	Html       string
+	PlainText  string
 	SenderName string
-	Subject string
+	Subject    string
 }
 
 type Holding struct {
@@ -117,16 +116,16 @@ type Lot struct {
 
 type Transaction struct {
 	TransactionId int `bson:"-"`
-	StockId int
-	DtTrade string
-	DtSettlement string
-	UnitPrice Decimal
-	Units Decimal
-	ValueQuoted Decimal
+	StockId       int
+	DtTrade       string
+	DtSettlement  string
+	UnitPrice     Decimal
+	Units         Decimal
+	ValueQuoted   Decimal
 
 	Description string
-	Reference string
-	AccountId int
+	Reference   string
+	AccountId   int
 }
 
 func (stock Stock) ToString() string {
@@ -140,7 +139,7 @@ func (stock *Stock) IsSourceHl() bool {
 
 type Alert struct {
 	Instruction MonitorInstruction
-	Message string
+	Message     string
 }
 
 type MonitorInstruction struct {
@@ -165,7 +164,6 @@ func (instruction MonitorInstruction) IsBuy() bool {
 func (instruction MonitorInstruction) IsSell() bool {
 	return instruction.PriceTypeToMonitor == PriceTypeSell
 }
-
 
 func (holding Holding) GetUnitsTotal() Decimal {
 	retVal := NewFromInt(0)
@@ -206,9 +204,9 @@ func (holding *Holding) GetValueTotalBought() Decimal {
 }
 
 type WatchDetail struct {
-	Stock Stock
-	Watch Watch
-	History PriceHistory
+	Stock         Stock
+	Watch         Watch
+	History       PriceHistory
 	ChangePercent Decimal
 }
 
@@ -219,16 +217,18 @@ type Watch struct {
 	AddedPriceBuy  Decimal
 	AddedPriceSell Decimal
 	AlertThreshold Decimal
-	Notes		   string
+	Notes          string
 
-	DtAdded string
+	DtAdded   string
 	WatchType int
-	DtStop string
+	DtStop    string
 }
 
 func (wd *WatchDetail) GetPriceLastCloseDesc() string {
 	priceLastClose := wd.GetPriceLastClosePounds()
-	if priceLastClose.IsNegative() { return "No price history"}
+	if priceLastClose.IsNegative() {
+		return "No price history"
+	}
 
 	return GetPriceDesc(priceLastClose)
 }
@@ -243,18 +243,18 @@ func (w *Watch) GetPriceBuyDesc() string {
 }
 
 type watchDetailIex struct {
-	Stock Stock
-	Watch Watch
-	PriceOpen Decimal `json:"open"`
-	PriceClose Decimal `json:"iexClose"`
-	PriceHigh Decimal `json:"high"`
-	ChangePercent Decimal `json:"changePercent"`
-	Volume Decimal `json:"volume"`
-	AverageVolume Decimal `json:"avgTotalVolume"`
-	PriceBid Decimal `json:"iexBidPrice"`
-	PriceAsk Decimal `json:"iexAskPrice"`
+	Stock              Stock
+	Watch              Watch
+	PriceOpen          Decimal `json:"open"`
+	PriceClose         Decimal `json:"iexClose"`
+	PriceHigh          Decimal `json:"high"`
+	ChangePercent      Decimal `json:"changePercent"`
+	Volume             Decimal `json:"volume"`
+	AverageVolume      Decimal `json:"avgTotalVolume"`
+	PriceBid           Decimal `json:"iexBidPrice"`
+	PriceAsk           Decimal `json:"iexAskPrice"`
 	PricePreviousClose Decimal `json:"previousClose"`
-	History PriceHistory
+	History            PriceHistory
 }
 
 func GetPriceDesc(price Decimal) string {
@@ -352,9 +352,10 @@ func (transaction Transaction) IsSell() bool {
 	return transaction.ValueQuoted.IsPositive()
 }
 
-
 func (wd *WatchDetail) GetPriceLastClosePounds() Decimal {
-	if len(wd.History.Eods) == 0 { return NewFromInt(-1) }
+	if len(wd.History.Eods) == 0 {
+		return NewFromInt(-1)
+	}
 
 	lastEod := wd.History.Eods[0]
 	return lastEod.PriceClosePounds
@@ -439,7 +440,6 @@ func (client *DefaultHttp) HttpGet(url string) (*http.Response, error) {
 }
 
 type DefaultHttp struct {
-
 }
 
 func BuildWatchDetail(client *DefaultHttp, stock Stock) WatchDetail {
@@ -473,7 +473,9 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 	percentChangeStr = reg.ReplaceAllString(percentChangeStr, "")
 
 	isNegative := selectionPcChange.HasClass("negative change")
-	if isNegative { percentChangeStr = "-" + percentChangeStr }
+	if isNegative {
+		percentChangeStr = "-" + percentChangeStr
+	}
 	percentChange, err := NewFromString(percentChangeStr)
 	CheckError(err)
 
@@ -492,7 +494,7 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 	return WatchDetail{
 		ChangePercent: percentChange,
 		History: PriceHistory{
-			Eods: []EodMarketStack {
+			Eods: []EodMarketStack{
 				{
 					Date:             timeMarketStack{time.Now()},
 					PriceClosePounds: parsePrice(priceSellStr),
@@ -574,8 +576,8 @@ func (stock *Stock) populateFromHl() {
 		Log(message)
 	}
 
-	stock.PriceBuy =  parsePrice(priceBuyStr)
-	stock.PriceSell= parsePrice(priceSellStr)
+	stock.PriceBuy = parsePrice(priceBuyStr)
+	stock.PriceSell = parsePrice(priceSellStr)
 }
 
 func parsePrice(priceStr string) Decimal {
@@ -590,7 +592,7 @@ func parsePrice(priceStr string) Decimal {
 		ixDecimal := strings.Index(priceStr, ".")
 		dpGiven := len(priceStr) - (ixDecimal + 1)
 		zeroesNeeded := 2 - dpGiven
-		for i := 0; i <zeroesNeeded; i++ {
+		for i := 0; i < zeroesNeeded; i++ {
 			priceStr += "0"
 		}
 		priceStr = strings.ReplaceAll(priceStr, ".", "")
@@ -631,6 +633,6 @@ func getIexUrl(stock Stock) string {
 }
 
 type Account struct {
-	AccountId int
+	AccountId   int
 	AccountName string
 }

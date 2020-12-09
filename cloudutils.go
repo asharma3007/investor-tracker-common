@@ -16,7 +16,7 @@ import (
 //connect without VPC connector https://cloud.google.com/sql/docs/mysql/connect-functions#go
 
 const (
-	EnvUrlEmailQueue 	= "URL_EMAIL_QUEUE"
+	EnvUrlEmailQueue = "URL_EMAIL_QUEUE"
 	//test remove
 
 	CloudfunctionSourceDir = "serverless_function_source_code"
@@ -28,7 +28,6 @@ func FixTemplateSourceDir() {
 		_ = os.Chdir(CloudfunctionSourceDir)
 	}
 }
-
 
 func PostJson(alerts []Alert) {
 	url := os.Getenv(EnvUrlEmailQueue)
@@ -84,5 +83,5 @@ func getSecret(envSecretName string) string {
 	if err != nil {
 		log.Fatalf("failed to access secret version: %v", err)
 	}
-	return string(result.Payload.Data);
+	return string(result.Payload.Data)
 }

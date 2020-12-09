@@ -16,10 +16,10 @@ const (
 type RequestEndOfDay struct {
 	RequestCommon
 	DateFrom time.Time
-	DateTo time.Time
+	DateTo   time.Time
 	SortMode string
-	Limit int
-	Offset int
+	Limit    int
+	Offset   int
 }
 
 func (request *RequestEndOfDay) GetUrl() string {
@@ -42,15 +42,15 @@ type RequestCommon struct {
 }
 
 type ResponseMarketStack struct {
-	Pagination Pagination `json:"pagination"`
-	Data []EodMarketStack `json:"data"`
+	Pagination Pagination       `json:"pagination"`
+	Data       []EodMarketStack `json:"data"`
 }
 
 type Pagination struct {
-	Limit int
+	Limit  int
 	Offset int
-	Count int
-	Total int
+	Count  int
+	Total  int
 }
 
 func QueryEndOfDayMarketStack(client HttpSource, request RequestEndOfDay) ResponseMarketStack {

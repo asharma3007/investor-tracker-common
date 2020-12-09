@@ -14,23 +14,23 @@ import (
 )
 
 type dbOptions struct {
-	Url       string
-	User      string
-	Password  string
-	Port      string
-	DbName    string
-	PrivateIp string
+	Url            string
+	User           string
+	Password       string
+	Port           string
+	DbName         string
+	PrivateIp      string
 	ConnectionName string
 }
 
 func getDbOptions() dbOptions {
 	return dbOptions{
-		Url:      os.Getenv(EnvDatabaseUrl),
-		User:     GetSecret(EnvSecretDbUser),
-		DbName:   os.Getenv(EnvDatabaseName),
-		Password: GetSecret(EnvSecretDbPassword),
-		Port:     os.Getenv(EnvDatabasePort),
-		PrivateIp:	os.Getenv(EnvDatabasePrivateIp),
+		Url:            os.Getenv(EnvDatabaseUrl),
+		User:           GetSecret(EnvSecretDbUser),
+		DbName:         os.Getenv(EnvDatabaseName),
+		Password:       GetSecret(EnvSecretDbPassword),
+		Port:           os.Getenv(EnvDatabasePort),
+		PrivateIp:      os.Getenv(EnvDatabasePrivateIp),
 		ConnectionName: GetSecret(EnvSecretDatabaseConnectionName),
 	}
 }
@@ -69,7 +69,7 @@ func getConnectionString(options dbOptions) string {
 }
 
 func getConnectionStringDirect(options dbOptions) string {
-	return  options.User + ":" + options.Password + "@tcp(" + options.Url + ":" + options.Port +")/" + options.DbName
+	return options.User + ":" + options.Password + "@tcp(" + options.Url + ":" + options.Port + ")/" + options.DbName
 }
 
 func getConnectionStringSocket(options dbOptions) string {

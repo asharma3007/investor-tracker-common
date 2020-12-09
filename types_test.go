@@ -12,7 +12,7 @@ const marketStackResponse = "{\"pagination\":{\"limit\":100,\"offset\":0,\"count
 func getWatchDetailTesla() WatchDetail {
 	exampleStock := Stock{
 		Description: "Tesla, Inc.",
-		Symbol: "TSLA",
+		Symbol:      "TSLA",
 	}
 
 	var responseDays ResponseMarketStack
@@ -40,7 +40,7 @@ func TestParseMarketStackResponse(t *testing.T) {
 		t.Errorf("Unexpected close price on 1 day, expected %v actual %v", day1ExpectedClose, day1Close)
 	}
 
-	day1DateExpected,_ := time.Parse("2006-01-02 03:04", "2020-10-09 00:00")
+	day1DateExpected, _ := time.Parse("2006-01-02 03:04", "2020-10-09 00:00")
 	day1Date := day1.Date
 	if !day1DateExpected.Equal(day1Date.Time) {
 		t.Errorf("Unexpected date on 1 day, expected %v actual %v", day1DateExpected, day1Date)
@@ -53,7 +53,7 @@ func TestParseMarketStackResponse(t *testing.T) {
 		t.Errorf("Unexpected close price on 6 day, expected %v actual %v", day6ExpectedClose, day6Close)
 	}
 
-	day6DateExpected,_ := time.Parse("2006-01-02 03:04", "2020-10-02 00:00")
+	day6DateExpected, _ := time.Parse("2006-01-02 03:04", "2020-10-02 00:00")
 	day6Date := day6.Date
 	if !day6DateExpected.Equal(day6Date.Time) {
 		t.Errorf("Unexpected date on 6 day, expected %v actual %v", day6DateExpected, day6Date)
@@ -81,7 +81,6 @@ func TestParseMarketStackResponse(t *testing.T) {
 	}
 }
 
-
 func TestCalculatePercentageChangeFromReference(t *testing.T) {
 
 	eod := EodMarketStack{
@@ -89,8 +88,8 @@ func TestCalculatePercentageChangeFromReference(t *testing.T) {
 	}
 
 	wd := WatchDetail{
-		Stock:   Stock{},
-		Watch:   Watch{
+		Stock: Stock{},
+		Watch: Watch{
 			AddedPriceBuy: NewFromInt(41145),
 		},
 		History: PriceHistory{
@@ -110,7 +109,7 @@ func TestGetDeltaReferencePercentDesc(t *testing.T) {
 
 	//test growth
 	detail.Watch.AddedPriceBuy, _ = NewFromString("42000") //was
-	actual := detail.GetDeltaReferencePercentDesc() //is 434.0
+	actual := detail.GetDeltaReferencePercentDesc()        //is 434.0
 	expected := "3.333 %"
 	if actual != expected {
 		t.Errorf("Expected %v Actual %v", expected, actual)
@@ -118,7 +117,7 @@ func TestGetDeltaReferencePercentDesc(t *testing.T) {
 
 	//test loss
 	detail.Watch.AddedPriceBuy, _ = NewFromString("45000") //was
-	actual = detail.GetDeltaReferencePercentDesc() //is 434.0
+	actual = detail.GetDeltaReferencePercentDesc()         //is 434.0
 	expected = "-3.556 %"
 	if actual != expected {
 		t.Errorf("Expected %v Actual %v", expected, actual)
