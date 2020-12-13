@@ -39,6 +39,7 @@ type Stock struct {
 	Url       string  `bson:"-"`
 	PriceBuy  Decimal `bson:"-"`
 	PriceSell Decimal `bson:"-"`
+	StockIdLegacy int
 }
 
 func (stock *Stock) GetDisplayName() string {
