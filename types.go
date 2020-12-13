@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/shopspring/decimal"
+	"go.mongodb.org/mongo-driver/bson"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -212,7 +213,7 @@ type WatchDetail struct {
 }
 
 type Watch struct {
-	WatchId        int `bson:"_id,omitempty"`
+	WatchId        string `bson:"_id,omitempty"`
 	StockId        string
 	DtReference    string
 	AddedPriceBuy  Decimal
@@ -224,6 +225,83 @@ type Watch struct {
 	WatchType int
 	DtStop    string
 	StockIdLegacy int
+}
+
+// https://stackoverflow.com/questions/30891301/handling-custom-bson-marshaling
+// GetBSON implements bson.Getter.
+func (w Watch) GetBSON() (interface{}, error) {
+	stringBuy := w.AddedPriceBuy.String()
+	stringSell := w.AddedPriceSell.String()
+	stringThreshold := w.AlertThreshold.String()
+
+	return struct {
+		WatchId        string `bson:"_id,omitempty"`
+		StockId        string
+		DtReference    string
+		AddedPriceBuy  string
+		AddedPriceSell string
+		AlertThreshold string
+		Notes          string
+
+		DtAdded   string
+		WatchType int
+		DtStop    string
+		StockIdLegacy int
+	}{
+		w.WatchId,
+		w.StockId,
+		w.DtReference,
+		stringBuy,
+		stringSell,
+		stringThreshold,
+		w.Notes,
+
+		w.DtAdded,
+		w.WatchType,
+		w.DtStop,
+		w.StockIdLegacy,
+	}, nil
+}
+
+// SetBSON implements bson.Setter.
+func (w *Watch) SetBSON(raw bson.Raw) error {
+
+	decoded := new(struct {
+		WatchId        string `bson:"_id,omitempty"`
+		StockId        string
+		DtReference    string
+		AddedPriceBuy  string
+		AddedPriceSell string
+		AlertThreshold string
+		Notes          string
+		DtAdded   string
+		WatchType int
+		DtStop    string
+		StockIdLegacy int
+	})
+
+	bsonErr := bson.Unmarshal(raw, decoded)
+
+	buyDec, _ := NewFromString(decoded.AddedPriceBuy)
+	sellDec, _ := NewFromString(decoded.AddedPriceSell)
+	thresholdDec, _ := NewFromString(decoded.AlertThreshold)
+
+	if bsonErr == nil {
+		w.WatchId = decoded.WatchId
+		w.StockId =	decoded.StockId
+		w.DtReference =	decoded.DtReference
+		w.AddedPriceBuy = buyDec
+		w.AddedPriceSell = sellDec
+		w.AlertThreshold = thresholdDec
+		w.Notes =decoded.Notes
+		w.DtAdded =	decoded.DtAdded
+		w.WatchType =	decoded.WatchType
+		w.DtStop =	decoded.DtStop
+		w.StockIdLegacy = decoded.StockIdLegacy
+		return nil
+	} else {
+		return bsonErr
+	}
 }
 
 func (wd *WatchDetail) GetPriceLastCloseDesc() string {
