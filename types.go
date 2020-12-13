@@ -30,7 +30,7 @@ const (
 )
 
 type Stock struct {
-	StockId       string `bson:"-"`
+	StockId       string `bson:"_id"`
 	Description   string
 	HlName        string
 	HlUrlOverride string `json:"UrlOverride" bson:"UrlOverride"`
