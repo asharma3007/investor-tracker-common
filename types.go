@@ -229,12 +229,86 @@ type Watch struct {
 
 // https://stackoverflow.com/questions/30891301/handling-custom-bson-marshaling
 // GetBSON implements bson.Getter.
-func (w Watch) GetBSON() (interface{}, error) {
+//func (w Watch) GetBSON() (interface{}, error) {
+//	stringBuy := w.AddedPriceBuy.String()
+//	stringSell := w.AddedPriceSell.String()
+//	stringThreshold := w.AlertThreshold.String()
+//
+//	return struct {
+//		WatchId        string `bson:"_id,omitempty"`
+//		StockId        string
+//		DtReference    string
+//		AddedPriceBuy  string
+//		AddedPriceSell string
+//		AlertThreshold string
+//		Notes          string
+//
+//		DtAdded   string
+//		WatchType int
+//		DtStop    string
+//		StockIdLegacy int
+//	}{
+//		w.WatchId,
+//		w.StockId,
+//		w.DtReference,
+//		stringBuy,
+//		stringSell,
+//		stringThreshold,
+//		w.Notes,
+//
+//		w.DtAdded,
+//		w.WatchType,
+//		w.DtStop,
+//		w.StockIdLegacy,
+//	}, nil
+//}
+//
+//// SetBSON implements bson.Setter.
+//func (w *Watch) SetBSON(raw bson.Raw) error {
+//
+//	decoded := new(struct {
+//		WatchId        string `bson:"_id,omitempty"`
+//		StockId        string
+//		DtReference    string
+//		AddedPriceBuy  string
+//		AddedPriceSell string
+//		AlertThreshold string
+//		Notes          string
+//		DtAdded   string
+//		WatchType int
+//		DtStop    string
+//		StockIdLegacy int
+//	})
+//
+//	bsonErr := bson.Unmarshal(raw, decoded)
+//	if bsonErr != nil {
+//		return bsonErr
+//	}
+//
+//	buyDec, _ := NewFromString(decoded.AddedPriceBuy)
+//	sellDec, _ := NewFromString(decoded.AddedPriceSell)
+//	thresholdDec, _ := NewFromString(decoded.AlertThreshold)
+//
+//	w.WatchId = decoded.WatchId
+//	w.StockId =	decoded.StockId
+//	w.DtReference =	decoded.DtReference
+//	w.AddedPriceBuy = buyDec
+//	w.AddedPriceSell = sellDec
+//	w.AlertThreshold = thresholdDec
+//	w.Notes =decoded.Notes
+//	w.DtAdded =	decoded.DtAdded
+//	w.WatchType =	decoded.WatchType
+//	w.DtStop =	decoded.DtStop
+//	w.StockIdLegacy = decoded.StockIdLegacy
+//	return nil
+//}
+
+func (w Watch) MarshalBSON() ([]byte, error) {
 	stringBuy := w.AddedPriceBuy.String()
 	stringSell := w.AddedPriceSell.String()
 	stringThreshold := w.AlertThreshold.String()
 
-	return struct {
+	intermediate := struct {
 		WatchId        string `bson:"_id,omitempty"`
 		StockId        string
 		DtReference    string
@@ -260,11 +334,13 @@ func (w Watch) GetBSON() (interface{}, error) {
 		w.WatchType,
 		w.DtStop,
 		w.StockIdLegacy,
-	}, nil
+	}
+
+	return bson.Marshal(intermediate)
 }
 
 // SetBSON implements bson.Setter.
-func (w *Watch) SetBSON(raw bson.Raw) error {
+func (w *Watch) UnmarshalBSON(raw []byte) error {
 
 	decoded := new(struct {
 		WatchId        string `bson:"_id,omitempty"`
@@ -281,27 +357,26 @@ func (w *Watch) SetBSON(raw bson.Raw) error {
 	})
 
 	bsonErr := bson.Unmarshal(raw, decoded)
+	if bsonErr != nil {
+		return bsonErr
+	}
 
 	buyDec, _ := NewFromString(decoded.AddedPriceBuy)
 	sellDec, _ := NewFromString(decoded.AddedPriceSell)
 	thresholdDec, _ := NewFromString(decoded.AlertThreshold)
 
-	if bsonErr == nil {
-		w.WatchId = decoded.WatchId
-		w.StockId =	decoded.StockId
-		w.DtReference =	decoded.DtReference
-		w.AddedPriceBuy = buyDec
-		w.AddedPriceSell = sellDec
-		w.AlertThreshold = thresholdDec
-		w.Notes =decoded.Notes
-		w.DtAdded =	decoded.DtAdded
-		w.WatchType =	decoded.WatchType
-		w.DtStop =	decoded.DtStop
-		w.StockIdLegacy = decoded.StockIdLegacy
-		return nil
-	} else {
-		return bsonErr
-	}
+	w.WatchId = decoded.WatchId
+	w.StockId =	decoded.StockId
+	w.DtReference =	decoded.DtReference
+	w.AddedPriceBuy = buyDec
+	w.AddedPriceSell = sellDec
+	w.AlertThreshold = thresholdDec
+	w.Notes =decoded.Notes
+	w.DtAdded =	decoded.DtAdded
+	w.WatchType =	decoded.WatchType
+	w.DtStop =	decoded.DtStop
+	w.StockIdLegacy = decoded.StockIdLegacy
+	return nil
 }
 
 func (wd *WatchDetail) GetPriceLastCloseDesc() string {
