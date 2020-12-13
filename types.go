@@ -212,7 +212,7 @@ type WatchDetail struct {
 }
 
 type Watch struct {
-	WatchId        int `bson:"-"`
+	WatchId        int `bson:"_id,omitempty"`
 	StockId        string
 	DtReference    string
 	AddedPriceBuy  Decimal
@@ -223,6 +223,7 @@ type Watch struct {
 	DtAdded   string
 	WatchType int
 	DtStop    string
+	StockIdLegacy int
 }
 
 func (wd *WatchDetail) GetPriceLastCloseDesc() string {
