@@ -345,7 +345,7 @@ func (w Watch) MarshalBSON() ([]byte, error) {
 func (w *Watch) UnmarshalBSON(raw []byte) error {
 
 	var decoded WatchBSON
-	bsonErr := bson.Unmarshal(raw, decoded)
+	bsonErr := bson.Unmarshal(raw, &decoded)
 	if bsonErr != nil {
 		return bsonErr
 	}
