@@ -59,6 +59,7 @@ func GetSecretsClient() *secretmanager.Client {
 }
 
 func GetSecret(envSecretName string) string {
+	Log("Getting secret " + envSecretName)
 	if len(envSecretName) == 0 { return "" }
 
 	if os.Getenv("LOCAL") == "1" {
