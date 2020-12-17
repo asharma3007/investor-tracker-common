@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -106,6 +107,10 @@ func ConnectDbMongo() (*mongo.Client, *mongo.Database) {
 	//dbClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
 	//"mongodb+srv://admin:<password>@tracker-mongo.3dzjg.mongodb.net/<dbname>?retryWrites=true&w=majority"
 	uri := fmt.Sprintf("mongodb+srv://%v:%v@%v/%v?retryWrites=true&w=majority", dbUser, dbPassword, dbUrl, dbName)
+
+	logUri := strings.Replace(uri, dbPassword, "password", -1)
+	Log("URI " + logUri)
+
 	dbClient, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	CheckError(err)
 
