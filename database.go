@@ -103,6 +103,8 @@ func DisconnectMongoDb(dbClient *mongo.Client) {
 }
 
 func ConnectDbMongo() (*mongo.Client, *mongo.Database) {
+	Log("Connecting mongo")
+
 	cfg := getDbOptions()
 
 	context, _ := context.WithTimeout(context.Background(), 10*time.Second)
