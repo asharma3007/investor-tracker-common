@@ -70,7 +70,14 @@ func getConnectionString(options dbOptions) string {
 }
 
 func getConnectionStringDirect(options dbOptions) string {
-	return options.User + ":" + options.Password + "@tcp(" + options.Url + ":" + options.Port + ")/" + options.DbName
+	Log("USING LOCAL ENVIRONMENT VARIABLES NOT SECRETS")
+	user := os.Getenv("DB_USER_MYSQL")
+	password := os.Getenv("DB_PASSWORD_MYSQL")
+	url := os.Getenv("DB_URL_MYSQL")
+	port := os.Getenv("DB_PORT_MYSQL")
+	dbName := os.Getenv("DB_NAME_MYSQL")
+
+	return user + ":" + password + "@tcp(" + url + ":" + port + ")/" + dbName
 }
 
 func getConnectionStringSocket(options dbOptions) string {
@@ -96,19 +103,19 @@ func DisconnectMongoDb(dbClient *mongo.Client) {
 }
 
 func ConnectDbMongo() (*mongo.Client, *mongo.Database) {
-
-	dbUrl := os.Getenv("MONGO_URL")
-	dbPassword := os.Getenv("MONGO_PASSWORD")
-	dbName := os.Getenv("MONGO_DBNAME")
-	dbUser := os.Getenv("MONGO_USER")
+	cfg := getDbOptions()
 
 	context, _ := context.WithTimeout(context.Background(), 10*time.Second)
 
 	//dbClient, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
 	//"mongodb+srv://admin:<password>@tracker-mongo.3dzjg.mongodb.net/<dbname>?retryWrites=true&w=majority"
-	uri := fmt.Sprintf("mongodb+srv://%v:%v@%v/%v?retryWrites=true&w=majority", dbUser, dbPassword, dbUrl, dbName)
+	uri := fmt.Sprintf("mongodb+srv://%v:%v@%v/%v?retryWrites=true&w=majority",
+		cfg.User,
+		cfg.Password,
+		cfg.Url,
+		cfg.DbName)
 
-	logUri := strings.Replace(uri, dbPassword, "password", -1)
+	logUri := strings.Replace(uri, cfg.Password, "password", -1)
 	Log("URI " + logUri)
 
 	dbClient, err := mongo.NewClient(options.Client().ApplyURI(uri))
@@ -125,6 +132,6 @@ func ConnectDbMongo() (*mongo.Client, *mongo.Database) {
 
 	fmt.Println(databases)
 
-	database := dbClient.Database(dbName)
+	database := dbClient.Database(cfg.DbName)
 	return dbClient, database
 }

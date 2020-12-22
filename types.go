@@ -15,9 +15,9 @@ import (
 
 const (
 	EnvDatabasePrivateIp            = "DATABASE_PRIVATE"
-	EnvDatabaseUrl                  = "DATABASE_URL"
-	EnvDatabasePort                 = "DATABASE_PORT"
-	EnvDatabaseName                 = "DATABASE_NAME"
+	EnvDatabaseUrl                  = "DB_URL"
+	EnvDatabasePort                 = "DB_PORT"
+	EnvDatabaseName                 = "DB_NAME"
 	EnvSecretDbUser                 = "SECRET_DATABASE_USER"
 	EnvSecretDbPassword             = "SECRET_DATABASE_PASSWORD"
 	EnvSecretDatabaseConnectionName = "SECRET_DATABASE_CONNECTION"
@@ -117,7 +117,7 @@ type Lot struct {
 }
 
 type Transaction struct {
-	TransactionId int `bson:"-"`
+	TransactionId string `bson:"-"`
 	StockId       string
 	DtTrade       string
 	DtSettlement  string
@@ -128,6 +128,7 @@ type Transaction struct {
 	Description string
 	Reference   string
 	AccountId   int
+	TransactionIdLegacy int
 }
 
 func (stock Stock) ToString() string {
