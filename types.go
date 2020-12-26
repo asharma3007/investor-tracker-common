@@ -52,6 +52,7 @@ func (stock *Stock) GetDisplayName() string {
 }
 
 //https://stackoverflow.com/questions/30891301/handling-custom-bson-marshaling
+//also perhaps can add a default encoder for Decimal - look at default_value_encoders.go
 // GetBSON implements bson.Getter.
 //func (s Stock) GetBSON() (interface{}, error) {
 //	stringBuy := s.PriceBuy.String()
@@ -121,14 +122,40 @@ type Transaction struct {
 	StockId       string
 	DtTrade       string
 	DtSettlement  string
-	UnitPrice     Decimal
-	Units         Decimal
-	ValueQuoted   Decimal
+	UnitPrice     Money
+	Units         DecimalExt
+	ValueQuoted   Money
 
 	Description string
 	Reference   string
 	AccountId   int
 	TransactionIdLegacy int
+	StockIdLegacy int
+}
+
+type DecimalExt struct {
+	Decimal
+}
+
+func (w DecimalExt) MarshalBSON() ([]byte, error) {
+	intermediate := make(map[string]interface{})
+	intermediate["value"] = w.String()
+
+	return bson.Marshal(intermediate)
+}
+
+func (w *DecimalExt) UnmarshalBSON(raw []byte) error {
+	var decoded map[string]string
+	bsonErr := bson.Unmarshal(raw, &decoded)
+	if bsonErr != nil {
+		return bsonErr
+	}
+
+	pounds, err := NewFromString(decoded["value"])
+	CheckError(err)
+
+	w.Decimal = pounds
+	return nil
 }
 
 func (stock Stock) ToString() string {
@@ -227,82 +254,6 @@ type Watch struct {
 	DtStop    string
 	StockIdLegacy int
 }
-
-// https://stackoverflow.com/questions/30891301/handling-custom-bson-marshaling
-// GetBSON implements bson.Getter.
-//func (w Watch) GetBSON() (interface{}, error) {
-//	stringBuy := w.AddedPriceBuy.String()
-//	stringSell := w.AddedPriceSell.String()
-//	stringThreshold := w.AlertThreshold.String()
-//
-//	return struct {
-//		WatchId        string `bson:"_id,omitempty"`
-//		StockId        string
-//		DtReference    string
-//		AddedPriceBuy  string
-//		AddedPriceSell string
-//		AlertThreshold string
-//		Notes          string
-//
-//		DtAdded   string
-//		WatchType int
-//		DtStop    string
-//		StockIdLegacy int
-//	}{
-//		w.WatchId,
-//		w.StockId,
-//		w.DtReference,
-//		stringBuy,
-//		stringSell,
-//		stringThreshold,
-//		w.Notes,
-//
-//		w.DtAdded,
-//		w.WatchType,
-//		w.DtStop,
-//		w.StockIdLegacy,
-//	}, nil
-//}
-//
-//// SetBSON implements bson.Setter.
-//func (w *Watch) SetBSON(raw bson.Raw) error {
-//
-//	decoded := new(struct {
-//		WatchId        string `bson:"_id,omitempty"`
-//		StockId        string
-//		DtReference    string
-//		AddedPriceBuy  string
-//		AddedPriceSell string
-//		AlertThreshold string
-//		Notes          string
-//		DtAdded   string
-//		WatchType int
-//		DtStop    string
-//		StockIdLegacy int
-//	})
-//
-//	bsonErr := bson.Unmarshal(raw, decoded)
-//	if bsonErr != nil {
-//		return bsonErr
-//	}
-//
-//	buyDec, _ := NewFromString(decoded.AddedPriceBuy)
-//	sellDec, _ := NewFromString(decoded.AddedPriceSell)
-//	thresholdDec, _ := NewFromString(decoded.AlertThreshold)
-//
-//	w.WatchId = decoded.WatchId
-//	w.StockId =	decoded.StockId
-//	w.DtReference =	decoded.DtReference
-//	w.AddedPriceBuy = buyDec
-//	w.AddedPriceSell = sellDec
-//	w.AlertThreshold = thresholdDec
-//	w.Notes =decoded.Notes
-//	w.DtAdded =	decoded.DtAdded
-//	w.WatchType =	decoded.WatchType
-//	w.DtStop =	decoded.DtStop
-//	w.StockIdLegacy = decoded.StockIdLegacy
-//	return nil
-//}
 
 type WatchBSON struct {
 	WatchId        string `bson:"_id,omitempty"`
@@ -567,11 +518,11 @@ func (wd *WatchDetail) GetDeltaReferencePercentDesc() string {
 }
 
 func (transaction Transaction) IsBuy() bool {
-	return transaction.ValueQuoted.IsNegative()
+	return transaction.ValueQuoted.Value.IsNegative()
 }
 
 func (transaction Transaction) IsSell() bool {
-	return transaction.ValueQuoted.IsPositive()
+	return transaction.ValueQuoted.Value.IsPositive()
 }
 
 func (wd *WatchDetail) GetPriceLastClosePounds() Decimal {
