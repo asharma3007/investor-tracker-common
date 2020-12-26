@@ -244,9 +244,9 @@ type Watch struct {
 	WatchId        string `bson:"_id,omitempty"`
 	StockId        string
 	DtReference    string
-	AddedPriceBuy  Decimal
-	AddedPriceSell Decimal
-	AlertThreshold Decimal
+	AddedPriceBuy  Money
+	AddedPriceSell Money
+	AlertThreshold DecimalExt
 	Notes          string
 
 	DtAdded   string
@@ -255,91 +255,27 @@ type Watch struct {
 	StockIdLegacy int
 }
 
-type WatchBSON struct {
-	WatchId        string `bson:"_id,omitempty"`
-	StockId        string
-	DtReference    string
-	AddedPriceBuy  string
-	AddedPriceSell string
-	AlertThreshold string
-	Notes          string
-
-	DtAdded   string
-	WatchType int
-	DtStop    string
-	StockIdLegacy int
-}
-
-func (w Watch) MarshalBSON() ([]byte, error) {
-	stringBuy := w.AddedPriceBuy.String()
-	stringSell := w.AddedPriceSell.String()
-	stringThreshold := w.AlertThreshold.String()
-
-	intermediate := WatchBSON {
-		w.WatchId,
-		w.StockId,
-		w.DtReference,
-		stringBuy,
-		stringSell,
-		stringThreshold,
-		w.Notes,
-
-		w.DtAdded,
-		w.WatchType,
-		w.DtStop,
-		w.StockIdLegacy,
-	}
-
-	return bson.Marshal(intermediate)
-}
-
-// SetBSON implements bson.Setter.
-func (w *Watch) UnmarshalBSON(raw []byte) error {
-
-	var decoded WatchBSON
-	bsonErr := bson.Unmarshal(raw, &decoded)
-	if bsonErr != nil {
-		return bsonErr
-	}
-
-	buyDec, _ := NewFromString(decoded.AddedPriceBuy)
-	sellDec, _ := NewFromString(decoded.AddedPriceSell)
-	thresholdDec, _ := NewFromString(decoded.AlertThreshold)
-
-	w.WatchId = decoded.WatchId
-	w.StockId =	decoded.StockId
-	w.DtReference =	decoded.DtReference
-	w.AddedPriceBuy = buyDec
-	w.AddedPriceSell = sellDec
-	w.AlertThreshold = thresholdDec
-	w.Notes =decoded.Notes
-	w.DtAdded =	decoded.DtAdded
-	w.WatchType =	decoded.WatchType
-	w.DtStop =	decoded.DtStop
-	w.StockIdLegacy = decoded.StockIdLegacy
-	return nil
-}
-
+//type WatchBSON struct {
+//	WatchId        string `bson:"_id,omitempty"`
+//	StockId        string
+//	DtReference    string
+//	AddedPriceBuy  string
+//	AddedPriceSell string
+//	AlertThreshold string
+//	Notes          string
+//
+//	DtAdded   string
+//	WatchType int
+//	DtStop    string
+//	StockIdLegacy int
+//}
 
 //func (w Watch) MarshalBSON() ([]byte, error) {
 //	stringBuy := w.AddedPriceBuy.String()
 //	stringSell := w.AddedPriceSell.String()
 //	stringThreshold := w.AlertThreshold.String()
 //
-//	intermediate := struct {
-//		WatchId        string `bson:"_id,omitempty"`
-//		StockId        string
-//		DtReference    string
-//		AddedPriceBuy  string
-//		AddedPriceSell string
-//		AlertThreshold string
-//		Notes          string
-//
-//		DtAdded   string
-//		WatchType int
-//		DtStop    string
-//		StockIdLegacy int
-//	}{
+//	intermediate := WatchBSON {
 //		w.WatchId,
 //		w.StockId,
 //		w.DtReference,
@@ -360,21 +296,8 @@ func (w *Watch) UnmarshalBSON(raw []byte) error {
 //// SetBSON implements bson.Setter.
 //func (w *Watch) UnmarshalBSON(raw []byte) error {
 //
-//	decoded := new(struct {
-//		WatchId        string `bson:"_id,omitempty"`
-//		StockId        string
-//		DtReference    string
-//		AddedPriceBuy  string
-//		AddedPriceSell string
-//		AlertThreshold string
-//		Notes          string
-//		DtAdded   string
-//		WatchType int
-//		DtStop    string
-//		StockIdLegacy int
-//	})
-//
-//	bsonErr := bson.Unmarshal(raw, decoded)
+//	var decoded WatchBSON
+//	bsonErr := bson.Unmarshal(raw, &decoded)
 //	if bsonErr != nil {
 //		return bsonErr
 //	}
@@ -407,11 +330,11 @@ func (wd *WatchDetail) GetPriceLastCloseDesc() string {
 }
 
 func (w *Watch) GetAlertThresholdDesc() string {
-	return GetPercentDesc(w.AlertThreshold)
+	return GetPercentDesc(w.AlertThreshold.Decimal)
 }
 
 func (w *Watch) GetPriceBuyDesc() string {
-	rounded := w.AddedPriceBuy.Round(3)
+	rounded := w.AddedPriceBuy.Value.Round(3)
 	return fmt.Sprintf("%vp", rounded)
 }
 
@@ -507,13 +430,13 @@ func (wd *WatchDetail) GetDeltaReferencePercentDesc() string {
 
 	priceStartWatch := wd.Watch.AddedPriceBuy
 
-	Log("***AddedPriceBuy " + wd.Watch.AddedPriceBuy.String() + " priceStartWatch " + priceStartWatch.String())
+	Log("***AddedPriceBuy " + wd.Watch.AddedPriceBuy.Value.String() + " priceStartWatch " + priceStartWatch.Value.String())
 
 	priceLastClose := wd.GetPriceLastClosePence()
 
 	Log("*** priceLastClose " + priceLastClose.String())
 
-	percent := getPercentChange(priceStartWatch, priceLastClose)
+	percent := getPercentChange(priceStartWatch.Value.Decimal, priceLastClose)
 	return GetPercentDesc(percent)
 }
 
@@ -649,6 +572,12 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 	if isNegative {
 		percentChangeStr = "-" + percentChangeStr
 	}
+
+	isNoChange := selectionPcChange.HasClass("nochange change")
+	if isNoChange {
+		percentChangeStr = "0"
+	}
+
 	percentChange, err := NewFromString(percentChangeStr)
 	CheckError(err)
 
