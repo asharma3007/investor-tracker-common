@@ -28,6 +28,16 @@ const (
 
 	PriceTypeSell = 0
 	PriceTypeBuy  = 1
+
+	TransactionTypeManagementFee = "manage fee"
+	TransactionTypeInterest      = "interest"
+	TransactionTypeInputCard     = "card web"
+
+	AccountIdIsa = "1"
+	AccountIdShare = "2"
+
+	WatchTypeThreshold = 1
+	WatchTypeCrashAnalysis = 2
 )
 
 type Stock struct {
