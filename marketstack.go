@@ -46,6 +46,12 @@ type ResponseMarketStack struct {
 	Data       []EodMarketStack `json:"data"`
 }
 
+func (resp *ResponseMarketStack) PopulateUsablePrice(stock Stock) {
+	for _, data := range resp.Data {
+		data.PopulateUsablePrice(stock)
+	}
+}
+
 type Pagination struct {
 	Limit  int
 	Offset int
@@ -84,7 +90,7 @@ func QueryEndOfDayMarketStack(client HttpSource, request RequestEndOfDay) Respon
 }
 
 func (eod *EodMarketStack) GetPriceCloseDesc() string {
-	return GetPriceDesc(eod.PriceClosePounds)
+	return eod.PriceClosePounds.GetDesc()
 }
 
 type PriceHistory struct {
@@ -93,15 +99,27 @@ type PriceHistory struct {
 
 type EodMarketStack struct {
 	Date             timeMarketStack `json:"date"`
-	PriceClosePounds Decimal         `json:"close"`
+	PriceClose	Decimal	`json:"close"`
+	PriceClosePounds Money         `json:"-"`
 }
 
 func (eod *EodMarketStack) GetPriceClosePence() Decimal {
-	return eod.PriceClosePounds.Mul(NewFromInt(100))
+	return eod.PriceClosePounds.Value.Mul(NewFromInt(100))
 }
 
 func (eod *EodMarketStack) Dump() {
-	LogDebug(eod.Date.Format("06 Jan 02") + " " + eod.PriceClosePounds.String())
+	LogDebug(eod.Date.Format("06 Jan 02") + " " + eod.PriceClosePounds.GetDesc())
+}
+
+func (eod *EodMarketStack) PopulateUsablePrice(stock Stock) {
+	if strings.Contains(stock.Symbol, ExchangeUsa) {
+		eod.PriceClosePounds = ConvertUsdToGbp(eod.PriceClose)
+	} else {
+		eod.PriceClosePounds =  Money{
+			Currency: CURRENCY_GBP,
+			Value:    DecimalExt{eod.PriceClose.Mul(NewFromInt(1))},
+		}
+	}
 }
 
 type timeMarketStack struct {

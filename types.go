@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/shopspring/decimal"
@@ -38,6 +39,9 @@ const (
 
 	WatchTypeThreshold = 1
 	WatchTypeCrashAnalysis = 2
+
+	ExchangeLondon = "XLON"
+	ExchangeUsa = "XNAS"
 )
 
 type Stock struct {
@@ -48,9 +52,10 @@ type Stock struct {
 	Symbol        string
 
 	Url       string  `bson:"-"`
-	PriceBuy  Decimal `bson:"-"`
-	PriceSell Decimal `bson:"-"`
+	PriceBuy  Money `bson:"-"`
+	PriceSell Money `bson:"-"`
 	StockIdLegacy int
+	Exchange string `bson:-`
 }
 
 func (stock *Stock) GetDisplayName() string {
@@ -213,7 +218,7 @@ func (holding Holding) GetUnitsTotal() Decimal {
 	return retVal
 }
 
-func (stock Stock) GetRelevantPrice(instruction MonitorInstruction) Decimal {
+func (stock Stock) GetRelevantPrice(instruction MonitorInstruction) Money {
 	if instruction.PriceTypeToMonitor == PriceTypeBuy {
 		return stock.PriceBuy
 	} else if instruction.PriceTypeToMonitor == PriceTypeSell {
@@ -331,12 +336,12 @@ type Watch struct {
 //}
 
 func (wd *WatchDetail) GetPriceLastCloseDesc() string {
-	priceLastClose := wd.GetPriceLastClosePounds()
-	if priceLastClose.IsNegative() {
+	priceLastClose := wd.GetPriceLastCloseUnits()
+	if priceLastClose.Value.IsNegative() {
 		return "No price history"
 	}
 
-	return GetPriceDesc(priceLastClose)
+	return priceLastClose.GetDesc()
 }
 
 func (w *Watch) GetAlertThresholdDesc() string {
@@ -363,8 +368,8 @@ type watchDetailIex struct {
 	History            PriceHistory
 }
 
-func GetPriceDesc(price Decimal) string {
-	return fmt.Sprintf("%v", convertPenceToPounds(price))
+func (m *Money) GetDesc() string {
+	return fmt.Sprintf("%v %v", m.Value.String(), m.Currency)
 }
 
 func (wd *WatchDetail) GetPricePreviousCloseDesc() string {
@@ -375,7 +380,7 @@ func (wd *WatchDetail) GetPricePreviousCloseDesc() string {
 	previousDay := wd.History.Eods[1]
 	previousClose := previousDay.PriceClosePounds
 
-	return fmt.Sprintf("%v", convertPenceToPounds(previousClose))
+	return previousClose.GetDesc()
 }
 
 func convertPenceToPounds(price Decimal) Decimal {
@@ -392,7 +397,7 @@ func (wd *WatchDetail) GetChangePercentDesc() string {
 		previousDay := wd.History.Eods[1]
 		lastClose := lastDay.PriceClosePounds
 		previousClose := previousDay.PriceClosePounds
-		percentChange := getPercentChange(previousClose, lastClose)
+		percentChange := getPercentChange(previousClose.Value.Decimal, lastClose.Value.Decimal)
 		return GetPercentDesc(percentChange)
 	}
 
@@ -458,17 +463,35 @@ func (transaction Transaction) IsSell() bool {
 	return transaction.ValueQuoted.Value.IsPositive()
 }
 
-func (wd *WatchDetail) GetPriceLastClosePounds() Decimal {
+func (wd *WatchDetail) GetPriceLastCloseUnits() Money {
 	if len(wd.History.Eods) == 0 {
-		return NewFromInt(-1)
+		return Money{
+			Currency: "",
+			Value:    DecimalExt{NewFromInt(-1)},
+		}
 	}
 
 	lastEod := wd.History.Eods[0]
-	return lastEod.PriceClosePounds
+
+	currency := ""
+	if wd.Stock.Exchange == ExchangeLondon {
+		currency = CURRENCY_GBP
+	} else if wd.Stock.Exchange == ExchangeUsa {
+		currency = CURRENCY_USD
+	} else {
+		err := errors.New("Unexpected exchange [" + wd.Stock.Exchange + "] for stock " + wd.Stock.ToString())
+		CheckError(err)
+	}
+
+	priceLastClose := Money{
+		Currency: currency,
+		Value:    lastEod.PriceClosePounds.Value,
+	}
+	return priceLastClose
 }
 
 func (wd *WatchDetail) GetPriceLastClosePence() Decimal {
-	return wd.GetPriceLastClosePounds().Mul(NewFromInt(100))
+	return wd.GetPriceLastCloseUnits().ToSubunits()
 }
 
 func (stock *Stock) GetPriceUrl() string {
@@ -603,13 +626,19 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 		Log(message)
 	}
 
+	priceCloseUnits := Money{
+		Currency: CURRENCY_GBP,
+		Value:    parsePrice(priceSellStr).Value,
+	}
+
+
 	return WatchDetail{
 		ChangePercent: percentChange,
 		History: PriceHistory{
 			Eods: []EodMarketStack{
 				{
 					Date:             timeMarketStack{time.Now()},
-					PriceClosePounds: parsePrice(priceSellStr),
+					PriceClosePounds: priceCloseUnits,
 				},
 			},
 		},
@@ -639,6 +668,8 @@ func BuildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
 	var responseDays ResponseMarketStack
 	err = json.Unmarshal(responseData, &responseDays)
 	CheckError(err)
+
+	responseDays.PopulateUsablePrice(stock)
 
 	var wd WatchDetail
 	wd.History.Eods = responseDays.Data
@@ -692,7 +723,7 @@ func (stock *Stock) populateFromHl() {
 	stock.PriceSell = parsePrice(priceSellStr)
 }
 
-func parsePrice(priceStr string) Decimal {
+func parsePrice(priceStr string) Money {
 	priceStr = strings.ReplaceAll(priceStr, "p", "")
 	priceStr = strings.ReplaceAll(priceStr, ",", "")
 	if len(priceStr) == 0 {
@@ -710,8 +741,13 @@ func parsePrice(priceStr string) Decimal {
 		priceStr = strings.ReplaceAll(priceStr, ".", "")
 	}
 
-	price, err := NewFromString(priceStr)
+	priceValue, err := NewFromString(priceStr)
 	CheckError(err)
+
+	price := Money{
+		Currency: "GBP",
+		Value:    DecimalExt{priceValue},
+	}
 	return price
 }
 
@@ -719,21 +755,21 @@ func (stock *Stock) populateFromMarketStack() {
 	var httpClient DefaultHttp
 	watchDetail := BuildWatchDetailMarketStack(&httpClient, *stock)
 
-	stock.PriceBuy = watchDetail.GetPriceLastClosePence()
-	stock.PriceSell = watchDetail.GetPriceLastClosePence()
+	stock.PriceBuy = watchDetail.GetPriceLastCloseUnits()
+	stock.PriceSell = watchDetail.GetPriceLastCloseUnits()
 
 	if strings.Contains(stock.Symbol, "XLON") {
-		stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
-		stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
+		stock.PriceBuy = watchDetail.GetPriceLastCloseUnits()
+		stock.PriceBuy = watchDetail.GetPriceLastCloseUnits()
 	}
 
-	if stock.PriceBuy.String() == "0" {
+	if stock.PriceBuy.Value.String() == "0" {
 		Log("Marketstack failed to get buy price for " + stock.Description + " from " + stock.Url)
 		wdJson, _ := json.Marshal(watchDetail)
 		Log(string(wdJson))
 	}
 
-	if stock.PriceSell.String() == "0" {
+	if stock.PriceSell.Value.String() == "0" {
 		Log("Marketstack failed to get sell price for " + stock.Description + " from " + stock.Url)
 		wdJson, _ := json.Marshal(watchDetail)
 		Log(string(wdJson))

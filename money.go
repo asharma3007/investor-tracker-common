@@ -11,11 +11,9 @@ const (
 	CURRENCY_EUR = "EUR"
 )
 
-
-// always in pounds
 type Money struct {
 	Currency string
-	Value DecimalExt
+	Value DecimalExt // always in units e.g pound, dollar not pence, cent
 }
 
 func (w Money) MarshalBSON() ([]byte, error) {
@@ -62,4 +60,12 @@ func FromPence(penceStr string) Money {
 		Currency: CURRENCY_GBP,
 		Value:    DecimalExt{pounds},
 	}
+}
+
+func (m Money) ToSubunits() Decimal {
+	return m.Value.Mul(NewFromInt(100))
+}
+
+func ConvertUsdToGbp(usd Decimal) Money {
+	return Money{ "GBP", DecimalExt{NewFromInt(1)}}
 }
