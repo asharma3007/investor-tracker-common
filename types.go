@@ -672,6 +672,7 @@ func BuildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
 	responseDays.PopulateUsablePrice(stock)
 
 	var wd WatchDetail
+	wd.Stock = stock
 	wd.History.Eods = responseDays.Data
 	return wd
 }
