@@ -46,10 +46,19 @@ type ResponseMarketStack struct {
 	Data       []EodMarketStack `json:"data"`
 }
 
-func (resp *ResponseMarketStack) PopulateUsablePrice(stock Stock) {
-	for _, data := range resp.Data {
-		data.PopulateUsablePrice(stock)
+func (resp *ResponseMarketStack) PopulateUsablePrice(stock *Stock) {
+	for ix, _ := range resp.Data {
+		resp.Data[ix].PopulateUsablePrice(stock)
 	}
+}
+
+func (resp *ResponseMarketStack) GetExchange() string {
+	if len(resp.Data) == 0 {
+		Log("No EODs on ResponseMarketData")
+		return ""
+	}
+
+	return resp.Data[0].Exchange
 }
 
 type Pagination struct {
@@ -100,6 +109,7 @@ type PriceHistory struct {
 type EodMarketStack struct {
 	Date             timeMarketStack `json:"date"`
 	PriceClose	Decimal	`json:"close"`
+	Exchange string `json:"exchange"`
 	PriceClosePounds Money         `json:"-"`
 }
 
@@ -111,7 +121,7 @@ func (eod *EodMarketStack) Dump() {
 	LogDebug(eod.Date.Format("06 Jan 02") + " " + eod.PriceClosePounds.GetDesc())
 }
 
-func (eod *EodMarketStack) PopulateUsablePrice(stock Stock) {
+func (eod *EodMarketStack) PopulateUsablePrice(stock *Stock) {
 	if strings.Contains(stock.Symbol, ExchangeUsa) {
 		eod.PriceClosePounds = ConvertUsdToGbp(eod.PriceClose)
 	} else {

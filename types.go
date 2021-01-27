@@ -2,7 +2,6 @@ package common
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/shopspring/decimal"
@@ -335,8 +334,8 @@ type Watch struct {
 //	return nil
 //}
 
-func (wd *WatchDetail) GetPriceLastCloseDesc() string {
-	priceLastClose := wd.GetPriceLastCloseUnits()
+func (wd *WatchDetail) GetPriceLastClosePoundsDesc() string {
+	priceLastClose := wd.GetPriceLastClosePounds()
 	if priceLastClose.Value.IsNegative() {
 		return "No price history"
 	}
@@ -443,15 +442,15 @@ func (wd *WatchDetail) GetDeltaReferencePercentDesc() string {
 
 	Log("***Stock " + wd.Stock.Description)
 
-	priceStartWatch := wd.Watch.AddedPriceBuy
+	priceStartPence := wd.Watch.AddedPriceBuy
 
-	Log("***AddedPriceBuy " + wd.Watch.AddedPriceBuy.Value.String() + " priceStartWatch " + priceStartWatch.Value.String())
+	Log("***AddedPriceBuy " + wd.Watch.AddedPriceBuy.Value.String() + " priceStartWatch " + priceStartPence.Value.String())
 
-	priceLastClose := wd.GetPriceLastClosePence()
+	priceLastPounds := wd.GetPriceLastClosePence()
 
-	Log("*** priceLastClose " + priceLastClose.String())
+	Log("*** priceLastClose " + priceLastPounds.String())
 
-	percent := getPercentChange(priceStartWatch.Value.Decimal, priceLastClose)
+	percent := getPercentChange(priceStartPence.Value.Decimal, priceLastPounds)
 	return GetPercentDesc(percent)
 }
 
@@ -463,7 +462,7 @@ func (transaction Transaction) IsSell() bool {
 	return transaction.ValueQuoted.Value.IsPositive()
 }
 
-func (wd *WatchDetail) GetPriceLastCloseUnits() Money {
+func (wd *WatchDetail) GetPriceLastClosePounds() Money {
 	if len(wd.History.Eods) == 0 {
 		return Money{
 			Currency: "",
@@ -472,26 +471,11 @@ func (wd *WatchDetail) GetPriceLastCloseUnits() Money {
 	}
 
 	lastEod := wd.History.Eods[0]
-
-	currency := ""
-	if wd.Stock.Exchange == ExchangeLondon {
-		currency = CURRENCY_GBP
-	} else if wd.Stock.Exchange == ExchangeUsa {
-		currency = CURRENCY_USD
-	} else {
-		err := errors.New("Unexpected exchange [" + wd.Stock.Exchange + "] for stock " + wd.Stock.ToString())
-		CheckError(err)
-	}
-
-	priceLastClose := Money{
-		Currency: currency,
-		Value:    lastEod.PriceClosePounds.Value,
-	}
-	return priceLastClose
+	return lastEod.PriceClosePounds
 }
 
 func (wd *WatchDetail) GetPriceLastClosePence() Decimal {
-	return wd.GetPriceLastCloseUnits().ToSubunits()
+	return wd.GetPriceLastClosePounds().ToSubunits()
 }
 
 func (stock *Stock) GetPriceUrl() string {
@@ -669,11 +653,20 @@ func BuildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
 	err = json.Unmarshal(responseData, &responseDays)
 	CheckError(err)
 
+	return CreateWatchDetailFromMarketStackResponse(&responseDays, &stock)
+}
+
+func CreateWatchDetailFromMarketStackResponse(responseDays *ResponseMarketStack, stock *Stock) WatchDetail {
 	responseDays.PopulateUsablePrice(stock)
 
 	var wd WatchDetail
-	wd.Stock = stock
 	wd.History.Eods = responseDays.Data
+
+	if (stock.Exchange == "") {
+		exchange := responseDays.GetExchange()
+		stock.Exchange = exchange
+	}
+	wd.Stock = *stock
 	return wd
 }
 
@@ -756,12 +749,12 @@ func (stock *Stock) populateFromMarketStack() {
 	var httpClient DefaultHttp
 	watchDetail := BuildWatchDetailMarketStack(&httpClient, *stock)
 
-	stock.PriceBuy = watchDetail.GetPriceLastCloseUnits()
-	stock.PriceSell = watchDetail.GetPriceLastCloseUnits()
+	stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
+	stock.PriceSell = watchDetail.GetPriceLastClosePounds()
 
 	if strings.Contains(stock.Symbol, "XLON") {
-		stock.PriceBuy = watchDetail.GetPriceLastCloseUnits()
-		stock.PriceBuy = watchDetail.GetPriceLastCloseUnits()
+		stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
+		stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
 	}
 
 	if stock.PriceBuy.Value.String() == "0" {

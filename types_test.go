@@ -19,10 +19,7 @@ func getWatchDetailTesla() WatchDetail {
 	err := json.Unmarshal([]byte(marketStackResponse), &responseDays)
 	CheckError(err)
 
-	var detail WatchDetail
-	detail.History.Eods = responseDays.Data
-	detail.Stock = exampleStock
-	return detail
+	return CreateWatchDetailFromMarketStackResponse(&responseDays, &exampleStock)
 }
 
 func TestParseMarketStackResponse(t *testing.T) {
@@ -36,7 +33,7 @@ func TestParseMarketStackResponse(t *testing.T) {
 	day1 := days[0]
 	day1ExpectedClose, _ := NewFromString("434.0")
 	day1Close := day1.PriceClosePounds
-	if !day1Close.Equals(day1ExpectedClose) {
+	if !day1Close.Value.Equals(day1ExpectedClose) {
 		t.Errorf("Unexpected close price on 1 day, expected %v actual %v", day1ExpectedClose, day1Close)
 	}
 
@@ -49,7 +46,7 @@ func TestParseMarketStackResponse(t *testing.T) {
 	day6 := days[5]
 	day6ExpectedClose, _ := NewFromString("415.09")
 	day6Close := day6.PriceClosePounds
-	if !day6Close.Equals(day6ExpectedClose) {
+	if !day6Close.Value.Equals(day6ExpectedClose) {
 		t.Errorf("Unexpected close price on 6 day, expected %v actual %v", day6ExpectedClose, day6Close)
 	}
 
@@ -62,19 +59,19 @@ func TestParseMarketStackResponse(t *testing.T) {
 	changePercentDesc := detail.GetChangePercentDesc()
 	day2CloseExpected, _ := NewFromString("425.92")
 
-	day1ClosePriceActual := detail.GetPriceLastCloseDesc()
-	day1ClosePriceExpected := "43400"
+	day1ClosePriceActual := detail.GetPriceLastClosePoundsDesc()
+	day1ClosePriceExpected := "434 GBP"
 	if day1ClosePriceActual != day1ClosePriceExpected {
 		t.Errorf("Unexpected last close price, expected %v actual %v", day1ClosePriceExpected, day1ClosePriceActual)
 	}
 
 	pricePreviousCloseDesc := detail.GetPricePreviousCloseDesc()
-	pricePreviousCloseDescExp := "42592"
+	pricePreviousCloseDescExp := "425.92 GBP"
 	if pricePreviousCloseDesc != pricePreviousCloseDescExp {
-		t.Errorf("Unexpected last close price, expected %v actual %v", pricePreviousCloseDescExp, pricePreviousCloseDesc)
+		t.Errorf("Unexpected previous close price, expected %v actual %v", pricePreviousCloseDescExp, pricePreviousCloseDesc)
 	}
 
-	changePercentExpected := ((day2CloseExpected.Sub(day1ExpectedClose)).Div(day2CloseExpected)).Mul(NewFromInt(100))
+	changePercentExpected := ((day1ExpectedClose.Sub(day2CloseExpected)).Div(day2CloseExpected)).Mul(NewFromInt(100))
 	changePercentExpectedDesc := GetPercentDesc(changePercentExpected)
 	if changePercentDesc != changePercentExpectedDesc {
 		t.Errorf("Incorrect change percent, expected %v actual %v", changePercentExpected, changePercentDesc)
@@ -83,21 +80,31 @@ func TestParseMarketStackResponse(t *testing.T) {
 
 func TestCalculatePercentageChangeFromReference(t *testing.T) {
 
+	priceClosePounds := Money {
+		Currency: CURRENCY_GBP,
+		Value: DecimalExt{NewFromFloat(423.90)},
+	}
+
 	eod := EodMarketStack{
-		PriceClosePounds: NewFromInt(42390),
+		PriceClosePounds: priceClosePounds,
+	}
+
+	addedPriceBuy := Money {
+		Currency: CURRENCY_GBP,
+		Value: DecimalExt{NewFromFloat(41145)}, //this mimics the incorrect price magnitude on watch
 	}
 
 	wd := WatchDetail{
 		Stock: Stock{},
 		Watch: Watch{
-			AddedPriceBuy: NewFromInt(41145),
+			AddedPriceBuy: addedPriceBuy,
 		},
 		History: PriceHistory{
 			Eods: []EodMarketStack{eod},
 		},
 	}
 
-	expected := "-3.026 %"
+	expected := "3.026 %"
 	result := wd.GetDeltaReferencePercentDesc()
 	if result != expected {
 		t.Errorf("Delta percent expected %v actual %v", expected, result)
@@ -107,16 +114,25 @@ func TestCalculatePercentageChangeFromReference(t *testing.T) {
 func TestGetDeltaReferencePercentDesc(t *testing.T) {
 	detail := getWatchDetailTesla()
 
+	addedPriceBuy := Money{
+		Currency: CURRENCY_GBP,
+		Value:    DecimalExt{NewFromFloat(42000)},
+	}
 	//test growth
-	detail.Watch.AddedPriceBuy, _ = NewFromString("42000") //was
+	detail.Watch.AddedPriceBuy = addedPriceBuy //was 420
 	actual := detail.GetDeltaReferencePercentDesc()        //is 434.0
 	expected := "3.333 %"
 	if actual != expected {
 		t.Errorf("Expected %v Actual %v", expected, actual)
 	}
 
+	addedPriceBuy2 := Money{
+		Currency: CURRENCY_GBP,
+		Value:    DecimalExt{NewFromFloat(45000)},
+	}
+
 	//test loss
-	detail.Watch.AddedPriceBuy, _ = NewFromString("45000") //was
+	detail.Watch.AddedPriceBuy = addedPriceBuy2 //was 450
 	actual = detail.GetDeltaReferencePercentDesc()         //is 434.0
 	expected = "-3.556 %"
 	if actual != expected {
