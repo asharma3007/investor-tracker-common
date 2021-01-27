@@ -13,6 +13,22 @@ func getWatchDetailTesla() WatchDetail {
 	exampleStock := Stock{
 		Description: "Tesla, Inc.",
 		Symbol:      "TSLA",
+		Exchange: ExchangeUsa,
+	}
+
+	var responseDays ResponseMarketStack
+	err := json.Unmarshal([]byte(marketStackResponse), &responseDays)
+	CheckError(err)
+
+	return CreateWatchDetailFromMarketStackResponse(&responseDays, &exampleStock)
+}
+
+func getWatchDetailUk() WatchDetail {
+	// TODO: Ankit: test unconverted stock
+
+	exampleStock := Stock{
+		Description: "Tesla, Inc.",
+		Symbol:      "TSLA",
 	}
 
 	var responseDays ResponseMarketStack
@@ -142,4 +158,19 @@ func TestGetDeltaReferencePercentDesc(t *testing.T) {
 
 func TestStock_PopulateCurrentPrice(t *testing.T) {
 
+}
+
+func TestGetCurrencyConversion(t *testing.T) {
+	conversionValue := GetConversionValue(CURRENCY_GBP, CURRENCY_USD)
+	Log(conversionValue.String())
+}
+
+func TestCurrencyConversion(t *testing.T) {
+	from := Money{
+		Currency: CURRENCY_GBP,
+		Value:    DecimalExt{NewFromInt(1)},
+	}
+
+	toCurrency := from.toCurrency(CURRENCY_USD)
+	Log(toCurrency.GetDesc())
 }

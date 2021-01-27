@@ -122,8 +122,13 @@ func (eod *EodMarketStack) Dump() {
 }
 
 func (eod *EodMarketStack) PopulateUsablePrice(stock *Stock) {
-	if strings.Contains(stock.Symbol, ExchangeUsa) {
-		eod.PriceClosePounds = ConvertUsdToGbp(eod.PriceClose)
+	if strings.Contains(stock.Exchange, ExchangeUsa) {
+		usd := Money{
+			Currency: CURRENCY_USD,
+			Value:    DecimalExt{ eod.PriceClose},
+		}
+
+		eod.PriceClosePounds = usd.toCurrency(CURRENCY_GBP)
 	} else {
 		eod.PriceClosePounds =  Money{
 			Currency: CURRENCY_GBP,

@@ -657,15 +657,16 @@ func BuildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
 }
 
 func CreateWatchDetailFromMarketStackResponse(responseDays *ResponseMarketStack, stock *Stock) WatchDetail {
-	responseDays.PopulateUsablePrice(stock)
-
-	var wd WatchDetail
-	wd.History.Eods = responseDays.Data
-
+	//exchange must be set before currency conversion takes place
 	if (stock.Exchange == "") {
 		exchange := responseDays.GetExchange()
 		stock.Exchange = exchange
 	}
+
+	responseDays.PopulateUsablePrice(stock)
+
+	var wd WatchDetail
+	wd.History.Eods = responseDays.Data
 	wd.Stock = *stock
 	return wd
 }
@@ -751,11 +752,6 @@ func (stock *Stock) populateFromMarketStack() {
 
 	stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
 	stock.PriceSell = watchDetail.GetPriceLastClosePounds()
-
-	if strings.Contains(stock.Symbol, "XLON") {
-		stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
-		stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
-	}
 
 	if stock.PriceBuy.Value.String() == "0" {
 		Log("Marketstack failed to get buy price for " + stock.Description + " from " + stock.Url)
