@@ -22,16 +22,21 @@ type Money struct {
 	Value DecimalExt // always in units e.g pound, dollar not pence, cent
 }
 
+func cacheConversion(from string, to string) {
+	key := getConversionKey(from, to)
+	conversion := GetConversionValue(from, to)
+	currencyConverter[key] = conversion
+
+	//and put reverse in too
+	reverseKey := getConversionKey(to, from)
+	currencyConverter[reverseKey] = NewFromInt(1).Div(conversion)
+}
+
 func (from Money) toCurrency(toCurrency string) Money {
 	key := getConversionKey(from.Currency, toCurrency)
 
 	if _, contains := currencyConverter[key]; !contains {
-		conversion := GetConversionValue(from.Currency, toCurrency)
-		currencyConverter[key] = conversion
-
-		//and put reverse in too
-		reverseKey := getConversionKey(toCurrency, from.Currency)
-		currencyConverter[reverseKey] = NewFromInt(1).Div(conversion)
+		cacheConversion(from.Currency, toCurrency)
 	}
 
 	conversion := currencyConverter[key]
@@ -48,15 +53,33 @@ func getConversionKey(from string, to string) string {
 	return from + ":" + to;
 }
 
+func getLastWorkingDay() time.Time {
+	//doesn't work on weekends
+
+	day := time.Now()
+
+	for {
+		dayOfWeek := day.Weekday()
+		if dayOfWeek != time.Saturday && dayOfWeek != time.Sunday {
+			return day
+		}
+		day = day.AddDate(0, 0, -1)
+	}
+}
+
 func GetConversionValue(from string, to string) Decimal {
 
-	todayStr := time.Now().Format("2006-01-02")
+	weekdayStr := getLastWorkingDay().Format("2006-01-02")
 
-	response, err := http.Get("https://api.exchangeratesapi.io/history?" +
-		"start_at=" + todayStr +
-		"&end_at=" + todayStr +
+	url := "https://api.exchangeratesapi.io/history?" +
+		"start_at=" + weekdayStr +
+		"&end_at=" + weekdayStr +
 		"&base=" + from +
-		"&symbols=" + to)
+		"&symbols=" + to
+
+	Log(url)
+
+	response, err := http.Get(url)
 	CheckError(err)
 
 	defer response.Body.Close()
@@ -71,7 +94,7 @@ func GetConversionValue(from string, to string) Decimal {
 	err = json.Unmarshal(responseData, &retval)
 	CheckError(err)
 
-	conversion := retval["rates"].(map[string]interface{})[todayStr].(map[string]interface{})[to].(float64)
+	conversion := retval["rates"].(map[string]interface{})[weekdayStr].(map[string]interface{})[to].(float64)
 	return NewFromFloat(conversion)
 }
 
