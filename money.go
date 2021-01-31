@@ -49,6 +49,20 @@ func (from Money) toCurrency(toCurrency string) Money {
 	}
 }
 
+func (this *Money) Add(other Money) Money {
+	checkCurrency(this, other)
+
+	newValue := this.Value.Add(other.Value.Decimal)
+	return Money{
+		Currency: this.Currency,
+		Value:    DecimalExt{newValue},
+	}
+}
+
+func checkCurrency(this *Money, other Money) {
+	if this.Currency != other.Currency { panic("Incompatible currencies" + this.Currency + " " + other.Currency)}
+}
+
 func getConversionKey(from string, to string) string {
 	return from + ":" + to;
 }

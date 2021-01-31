@@ -368,7 +368,8 @@ type watchDetailIex struct {
 }
 
 func (m *Money) GetDesc() string {
-	return fmt.Sprintf("%v %v", m.Value.String(), m.Currency)
+	rounded := m.Value.Round(3)
+	return fmt.Sprintf("%v %v", rounded.String(), m.Currency)
 }
 
 func (wd *WatchDetail) GetPricePreviousCloseDesc() string {
@@ -725,8 +726,11 @@ func parsePrice(priceStr string) Money {
 		priceStr = "0"
 	}
 
+	currency := CURRENCY_GBP
+
 	if strings.HasPrefix(priceStr, "£") {
 		priceStr = strings.ReplaceAll(priceStr, "£", "")
+
 		ixDecimal := strings.Index(priceStr, ".")
 		dpGiven := len(priceStr) - (ixDecimal + 1)
 		zeroesNeeded := 2 - dpGiven
@@ -736,11 +740,16 @@ func parsePrice(priceStr string) Money {
 		priceStr = strings.ReplaceAll(priceStr, ".", "")
 	}
 
+	if strings.HasPrefix(priceStr, "$") {
+		priceStr = strings.ReplaceAll(priceStr, "$", "")
+		currency = CURRENCY_USD
+	}
+
 	priceValue, err := NewFromString(priceStr)
 	CheckError(err)
 
 	price := Money{
-		Currency: "GBP",
+		Currency: currency,
 		Value:    DecimalExt{priceValue},
 	}
 	return price
