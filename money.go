@@ -49,7 +49,7 @@ func (from Money) toCurrency(toCurrency string) Money {
 	}
 }
 
-func (this *Money) Add(other Money) Money {
+func (this Money) Add(other Money) Money {
 	checkCurrency(this, other)
 
 	newValue := this.Value.Add(other.Value.Decimal)
@@ -59,7 +59,7 @@ func (this *Money) Add(other Money) Money {
 	}
 }
 
-func checkCurrency(this *Money, other Money) {
+func checkCurrency(this Money, other Money) {
 	if this.Currency != other.Currency { panic("Incompatible currencies" + this.Currency + " " + other.Currency)}
 }
 
@@ -161,4 +161,55 @@ func FromPence(penceStr string) Money {
 
 func (m Money) ToSubunits() Decimal {
 	return m.Value.Mul(NewFromInt(100))
+}
+
+func (this Money) Sub(other Money) Money {
+	checkCurrency(this, other)
+
+	result := this.Value.Sub(other.Value.Decimal)
+
+	return Money{
+		Currency: this.Currency,
+		Value:    DecimalExt{result},
+	}
+}
+
+func (this Money) Div(other Money) Decimal {
+	checkCurrency(this, other)
+
+	return this.Value.Div(other.Value.Decimal)
+}
+
+func (m *Money) Mul(factor Decimal) Money {
+	result := m.Value.Mul(factor)
+
+	return Money{
+		Currency: m.Currency,
+		Value:    DecimalExt{result},
+	}
+}
+
+func (m *Money) ToUnits() Money {
+	result := m.Value.Decimal.Div(NewFromInt(100))
+	return Money{
+		Currency: m.Currency,
+		Value:    DecimalExt{result},
+	}
+}
+
+func (m *Money) String() string {
+	return m.GetDesc()
+}
+
+func (m *Money) DebugString() string {
+	return m.GetDesc()
+}
+
+func FromPounds(poundsStr string) Money {
+	value, err := NewFromString(poundsStr)
+	CheckError(err)
+	return Money{
+		Currency: CURRENCY_GBP,
+		Value:    DecimalExt{value},
+	}
 }

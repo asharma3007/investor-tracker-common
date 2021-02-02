@@ -113,27 +113,29 @@ type EodMarketStack struct {
 	PriceClosePounds Money         `json:"-"`
 }
 
-func (eod *EodMarketStack) GetPriceClosePence() Decimal {
-	return eod.PriceClosePounds.Value.Mul(NewFromInt(100))
-}
+//func (eod *EodMarketStack) GetPriceClosePence() Decimal {
+//	return eod.PriceClosePounds.Value.Mul(NewFromInt(100))
+//}
 
 func (eod *EodMarketStack) Dump() {
 	LogDebug(eod.Date.Format("06 Jan 02") + " " + eod.PriceClosePounds.GetDesc())
 }
 
 func (eod *EodMarketStack) PopulateUsablePrice(stock *Stock) {
+	Log("Converting to pounds for stock \n" + stock.ToString())
+
 	if strings.Contains(stock.Exchange, ExchangeUsa) {
 		usd := Money{
 			Currency: CURRENCY_USD,
 			Value:    DecimalExt{ eod.PriceClose},
 		}
-
+		Log("Is USD " + usd.GetDesc())
 		eod.PriceClosePounds = usd.toCurrency(CURRENCY_GBP)
+		Log("To pounds is " + eod.PriceClosePounds.GetDesc())
+
 	} else {
-		eod.PriceClosePounds =  Money{
-			Currency: CURRENCY_GBP,
-			Value:    DecimalExt{eod.PriceClose.Mul(NewFromInt(1))},
-		}
+		eod.PriceClosePounds =  FromPence(eod.PriceClose.String())
+		Log("Is pounds " + eod.PriceClosePounds.GetDesc())
 	}
 }
 

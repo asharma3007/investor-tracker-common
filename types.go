@@ -33,8 +33,8 @@ const (
 	TransactionTypeInterest      = "interest"
 	TransactionTypeInputCard     = "card web"
 
-	AccountIdIsa = "1"
-	AccountIdShare = "2"
+	AccountIdIsa = 1
+	AccountIdShare = 2
 
 	WatchTypeThreshold = 1
 	WatchTypeCrashAnalysis = 2
@@ -720,7 +720,6 @@ func (stock *Stock) populateFromHl() {
 }
 
 func parsePrice(priceStr string) Money {
-	priceStr = strings.ReplaceAll(priceStr, "p", "")
 	priceStr = strings.ReplaceAll(priceStr, ",", "")
 	if len(priceStr) == 0 {
 		priceStr = "0"
@@ -728,16 +727,13 @@ func parsePrice(priceStr string) Money {
 
 	currency := CURRENCY_GBP
 
+	if (strings.HasSuffix(priceStr, "p")) {
+		priceStr = strings.ReplaceAll(priceStr, "p", "")
+		return FromPence(priceStr)
+	}
+
 	if strings.HasPrefix(priceStr, "£") {
 		priceStr = strings.ReplaceAll(priceStr, "£", "")
-
-		ixDecimal := strings.Index(priceStr, ".")
-		dpGiven := len(priceStr) - (ixDecimal + 1)
-		zeroesNeeded := 2 - dpGiven
-		for i := 0; i < zeroesNeeded; i++ {
-			priceStr += "0"
-		}
-		priceStr = strings.ReplaceAll(priceStr, ".", "")
 	}
 
 	if strings.HasPrefix(priceStr, "$") {
