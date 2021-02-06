@@ -111,7 +111,7 @@ func TestCalculatePercentageChangeFromReference(t *testing.T) {
 	}
 
 	wd := WatchDetail{
-		Stock: Stock{},
+		Stock: &Stock{},
 		Watch: Watch{
 			AddedPriceBuy: addedPriceBuy,
 		},

@@ -33,6 +33,10 @@ func cacheConversion(from string, to string) {
 }
 
 func (from Money) toCurrency(toCurrency string) Money {
+	if from.Currency == toCurrency {
+		return from
+	}
+
 	key := getConversionKey(from.Currency, toCurrency)
 
 	if _, contains := currencyConverter[key]; !contains {
@@ -159,8 +163,11 @@ func FromPence(penceStr string) Money {
 	}
 }
 
-func (m Money) ToSubunits() Decimal {
-	return m.Value.Mul(NewFromInt(100))
+func (m Money) ToSubunits() Money {
+	return Money{
+		Currency: m.Currency,
+		Value: DecimalExt{m.Value.Mul(NewFromInt(100))},
+	}
 }
 
 func (this Money) Sub(other Money) Money {

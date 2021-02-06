@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	. "github.com/shopspring/decimal"
@@ -248,7 +249,7 @@ func (holding *Holding) GetValueTotalBought() Decimal {
 }
 
 type WatchDetail struct {
-	Stock         Stock
+	Stock         *Stock
 	Watch         Watch
 	History       PriceHistory
 	ChangePercent Decimal
@@ -447,11 +448,13 @@ func (wd *WatchDetail) GetDeltaReferencePercentDesc() string {
 
 	Log("***AddedPriceBuy " + wd.Watch.AddedPriceBuy.Value.String() + " priceStartWatch " + priceStartPence.Value.String())
 
-	priceLastPounds := wd.GetPriceLastClosePence()
+	priceLastPence := wd.GetPriceLastClosePence()
 
-	Log("*** priceLastClose " + priceLastPounds.String())
+	Log("*** priceLastClose " + priceLastPence.String())
 
-	percent := getPercentChange(priceStartPence.Value.Decimal, priceLastPounds)
+	checkCurrency(priceStartPence, priceLastPence)
+
+	percent := getPercentChange(priceStartPence.Value.Decimal, priceLastPence.Value.Decimal)
 	return GetPercentDesc(percent)
 }
 
@@ -472,10 +475,28 @@ func (wd *WatchDetail) GetPriceLastClosePounds() Money {
 	}
 
 	lastEod := wd.History.Eods[0]
-	return lastEod.PriceClosePounds
+	pounds := lastEod.PriceClosePounds
+
+	if pounds.Currency != CURRENCY_GBP {
+		marshal, _ := json.Marshal(*wd)
+		Log(string(marshal))
+		CheckError(errors.New("Currency incorrect " + pounds.Currency))
+	}
+
+	return pounds
 }
 
-func (wd *WatchDetail) GetPriceLastClosePence() Decimal {
+func (wd *WatchDetail) GetPriceLastCloseDecimal() Decimal {
+	if len(wd.History.Eods) == 0 {
+		return NewFromInt(-1)
+	}
+
+	lastEod := wd.History.Eods[0]
+	return lastEod.PriceClose
+}
+
+
+func (wd *WatchDetail) GetPriceLastClosePence() Money {
 	return wd.GetPriceLastClosePounds().ToSubunits()
 }
 
@@ -534,14 +555,12 @@ func getHlUrlFromName(hlName string) string {
 	return retVal
 }
 
-func (stock Stock) PopulateCurrentPrice() Stock {
+func (stock *Stock) PopulateCurrentPrice() {
 	if stock.IsSourceHl() {
 		stock.populateFromHl()
 	} else {
 		stock.populateFromMarketStack()
 	}
-
-	return stock
 }
 
 //go:generate mockgen -destination=mocks/mock_httpsource.go -package=cloudfunction . HttpSource
@@ -559,10 +578,8 @@ type DefaultHttp struct {
 func BuildWatchDetail(client *DefaultHttp, stock Stock) WatchDetail {
 	if stock.IsSourceHl() {
 		return buildWatchDetailHl(stock)
-		//return watchDetail{}
 	} else {
-		return BuildWatchDetailMarketStack(client, stock)
-		//return watchDetail{}
+		return BuildWatchDetailMarketStack(client, &stock)
 	}
 }
 
@@ -630,7 +647,7 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 	}
 }
 
-func BuildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
+func BuildWatchDetailMarketStack(client HttpSource, stock *Stock) WatchDetail {
 	log := fmt.Sprintf("BuildWatchDetailMarketStack price history for %v from URL: %v", stock.ToString(), stock.Url)
 	Log(log)
 
@@ -654,7 +671,7 @@ func BuildWatchDetailMarketStack(client HttpSource, stock Stock) WatchDetail {
 	err = json.Unmarshal(responseData, &responseDays)
 	CheckError(err)
 
-	return CreateWatchDetailFromMarketStackResponse(&responseDays, &stock)
+	return CreateWatchDetailFromMarketStackResponse(&responseDays, stock)
 }
 
 func CreateWatchDetailFromMarketStackResponse(responseDays *ResponseMarketStack, stock *Stock) WatchDetail {
@@ -668,7 +685,7 @@ func CreateWatchDetailFromMarketStackResponse(responseDays *ResponseMarketStack,
 
 	var wd WatchDetail
 	wd.History.Eods = responseDays.Data
-	wd.Stock = *stock
+	wd.Stock = stock
 	return wd
 }
 
@@ -715,8 +732,8 @@ func (stock *Stock) populateFromHl() {
 		Log(message)
 	}
 
-	stock.PriceBuy = parsePrice(priceBuyStr)
-	stock.PriceSell = parsePrice(priceSellStr)
+	stock.PriceBuy = parsePrice(priceBuyStr).toCurrency(CURRENCY_GBP)
+	stock.PriceSell = parsePrice(priceSellStr).toCurrency(CURRENCY_GBP)
 }
 
 func parsePrice(priceStr string) Money {
@@ -753,10 +770,22 @@ func parsePrice(priceStr string) Money {
 
 func (stock *Stock) populateFromMarketStack() {
 	var httpClient DefaultHttp
-	watchDetail := BuildWatchDetailMarketStack(&httpClient, *stock)
+	watchDetail := BuildWatchDetailMarketStack(&httpClient, stock)
 
-	stock.PriceBuy = watchDetail.GetPriceLastClosePounds()
-	stock.PriceSell = watchDetail.GetPriceLastClosePounds()
+	// TODO: Ankit: use price buy & price sell
+	currency := CURRENCY_GBP
+	if stock.Exchange == ExchangeUsa {
+		currency = CURRENCY_USD
+	}
+
+	priceLastClose := watchDetail.GetPriceLastClosePounds()
+
+	if currency != CURRENCY_GBP {
+		priceLastClose = priceLastClose.toCurrency(CURRENCY_GBP)
+	}
+
+	stock.PriceBuy = priceLastClose
+	stock.PriceSell = priceLastClose
 
 	if stock.PriceBuy.Value.String() == "0" {
 		Log("Marketstack failed to get buy price for " + stock.Description + " from " + stock.Url)
