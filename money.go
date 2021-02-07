@@ -32,6 +32,10 @@ func cacheConversion(from string, to string) {
 	currencyConverter[reverseKey] = NewFromInt(1).Div(conversion)
 }
 
+func (from Money) toPounds() Money {
+	return from.toCurrency(CURRENCY_GBP)
+}
+
 func (from Money) toCurrency(toCurrency string) Money {
 	if from.Currency == toCurrency {
 		return from
@@ -64,7 +68,10 @@ func (this Money) Add(other Money) Money {
 }
 
 func checkCurrency(this Money, other Money) {
-	if this.Currency != other.Currency { panic("Incompatible currencies" + this.Currency + " " + other.Currency)}
+	if this.Currency != other.Currency {
+		//panic("Incompatible currencies " + this.Currency + " " + other.Currency)
+		Log("Incompatible currencies " + this.String() + " " + other.String())
+	}
 }
 
 func getConversionKey(from string, to string) string {

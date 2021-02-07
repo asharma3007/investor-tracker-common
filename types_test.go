@@ -150,7 +150,7 @@ func TestCalculatePercentageChangeFromReference(t *testing.T) {
 
 	addedPriceBuy := Money {
 		Currency: CURRENCY_GBP,
-		Value: DecimalExt{NewFromFloat(41145)}, //this mimics the incorrect price magnitude on watch
+		Value: DecimalExt{NewFromFloat(411.45)},
 	}
 
 	wd := WatchDetail{
@@ -171,11 +171,14 @@ func TestCalculatePercentageChangeFromReference(t *testing.T) {
 }
 
 func TestGetDeltaReferencePercentDesc(t *testing.T) {
+	key := getConversionKey(CURRENCY_USD, CURRENCY_GBP)
+	currencyConverter[key], _ = NewFromString("1")
+
 	detail := getWatchDetailUsd()
 
 	addedPriceBuy := Money{
 		Currency: CURRENCY_GBP,
-		Value:    DecimalExt{NewFromFloat(42000)},
+		Value:    DecimalExt{NewFromFloat(420.00)},
 	}
 	//test growth
 	detail.Watch.AddedPriceBuy = addedPriceBuy //was 420
@@ -187,7 +190,7 @@ func TestGetDeltaReferencePercentDesc(t *testing.T) {
 
 	addedPriceBuy2 := Money{
 		Currency: CURRENCY_GBP,
-		Value:    DecimalExt{NewFromFloat(45000)},
+		Value:    DecimalExt{NewFromFloat(450.00)},
 	}
 
 	//test loss
@@ -197,10 +200,6 @@ func TestGetDeltaReferencePercentDesc(t *testing.T) {
 	if actual != expected {
 		t.Errorf("Expected %v Actual %v", expected, actual)
 	}
-}
-
-func TestStock_PopulateCurrentPrice(t *testing.T) {
-
 }
 
 func TestGetCurrencyConversion(t *testing.T) {

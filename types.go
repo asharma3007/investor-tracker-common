@@ -349,8 +349,7 @@ func (w *Watch) GetAlertThresholdDesc() string {
 }
 
 func (w *Watch) GetPriceBuyDesc() string {
-	rounded := w.AddedPriceBuy.Value.Round(3)
-	return fmt.Sprintf("%vp", rounded)
+	return w.AddedPriceBuy.GetDesc()
 }
 
 type watchDetailIex struct {
@@ -444,17 +443,18 @@ func (wd *WatchDetail) GetDeltaReferencePercentDesc() string {
 
 	Log("***Stock " + wd.Stock.Description)
 
-	priceStartPence := wd.Watch.AddedPriceBuy
+	priceStartUnconverted := wd.Watch.AddedPriceBuy
+	priceStartPounds := priceStartUnconverted.toPounds()
 
-	Log("***AddedPriceBuy " + wd.Watch.AddedPriceBuy.Value.String() + " priceStartWatch " + priceStartPence.Value.String())
+	Log("***AddedPriceBuy " + wd.Watch.AddedPriceBuy.GetDesc() + " priceStartPounds " + priceStartPounds.GetDesc())
 
-	priceLastPence := wd.GetPriceLastClosePence()
+	priceLastPounds := wd.GetPriceLastClosePounds()
 
-	Log("*** priceLastClose " + priceLastPence.String())
+	Log("*** priceLastClose " + priceLastPounds.GetDesc())
 
-	checkCurrency(priceStartPence, priceLastPence)
+	checkCurrency(priceStartPounds, priceLastPounds)
 
-	percent := getPercentChange(priceStartPence.Value.Decimal, priceLastPence.Value.Decimal)
+	percent := getPercentChange(priceStartPounds.Value.Decimal, priceLastPounds.Value.Decimal)
 	return GetPercentDesc(percent)
 }
 
@@ -628,11 +628,8 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 		Log(message)
 	}
 
-	priceCloseUnits := Money{
-		Currency: CURRENCY_GBP,
-		Value:    parsePrice(priceSellStr).Value,
-	}
-
+	priceCloseUnits := parsePrice(priceSellStr)
+	priceClosePounds := priceCloseUnits.toPounds()
 
 	return WatchDetail{
 		ChangePercent: percentChange,
@@ -640,7 +637,8 @@ func buildWatchDetailHl(stock Stock) WatchDetail {
 			Eods: []EodMarketStack{
 				{
 					Date:             timeMarketStack{time.Now()},
-					PriceClosePounds: priceCloseUnits,
+					PriceClose: priceCloseUnits.Value.Decimal,
+					PriceClosePounds: priceClosePounds,
 				},
 			},
 		},
@@ -732,8 +730,8 @@ func (stock *Stock) populateFromHl() {
 		Log(message)
 	}
 
-	stock.PriceBuy = parsePrice(priceBuyStr).toCurrency(CURRENCY_GBP)
-	stock.PriceSell = parsePrice(priceSellStr).toCurrency(CURRENCY_GBP)
+	stock.PriceBuy = parsePrice(priceBuyStr).toPounds()
+	stock.PriceSell = parsePrice(priceSellStr).toPounds()
 }
 
 func parsePrice(priceStr string) Money {
@@ -781,7 +779,7 @@ func (stock *Stock) populateFromMarketStack() {
 	priceLastClose := watchDetail.GetPriceLastClosePounds()
 
 	if currency != CURRENCY_GBP {
-		priceLastClose = priceLastClose.toCurrency(CURRENCY_GBP)
+		priceLastClose = priceLastClose.toPounds()
 	}
 
 	stock.PriceBuy = priceLastClose

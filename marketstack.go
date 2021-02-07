@@ -123,7 +123,7 @@ func (eod *EodMarketStack) PopulateUsablePrice(stock *Stock) {
 			Currency: CURRENCY_USD,
 			Value:    DecimalExt{ eod.PriceClose},
 		}
-		eod.PriceClosePounds = usd.toCurrency(CURRENCY_GBP)
+		eod.PriceClosePounds = usd.toPounds()
 
 	} else {
 		eod.PriceClosePounds =  FromPence(eod.PriceClose.String())
