@@ -186,6 +186,7 @@ func (stock *Stock) IsSourceHl() bool {
 
 type Alert struct {
 	Instruction MonitorInstruction
+	Stock		*Stock
 	Message     string
 }
 
