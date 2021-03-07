@@ -33,6 +33,7 @@ const (
 	TransactionTypeManagementFee = "manage fee"
 	TransactionTypeInterest      = "interest"
 	TransactionTypeInputCard     = "card web"
+	TransactionTypeTransferOut	 = "fpd"
 
 	AccountIdIsa = 1
 	AccountIdShare = 2
@@ -140,6 +141,7 @@ type Transaction struct {
 	UnitPrice     Money
 	Units         DecimalExt
 	ValueQuoted   Money
+	Ignore		  bool
 
 	Description string
 	Reference   string
