@@ -511,6 +511,26 @@ func (stock *Stock) GetPriceUrl() string {
 	}
 }
 
+func (stock *Stock) GetPricePageUrl() string {
+	priceUrl := stock.GetPriceUrl()
+	if stock.IsSourceHl() {
+		priceUrl += "/charts"
+	} else {
+		priceUrl = "https://www.google.com/finance/quote/"
+
+		symbolToks := strings.Split(stock.Symbol, ".")
+		priceUrl += symbolToks[0]
+
+		if len(symbolToks) > 1 && symbolToks[1] == ExchangeLondon {
+			priceUrl += ":LON"
+		} else {
+			priceUrl += ":NASDAQ"
+		}
+	}
+
+	return priceUrl
+}
+
 func (stock *Stock) getHlUrl() string {
 	var urlToUse string
 	// need to override the full URL for some of them
