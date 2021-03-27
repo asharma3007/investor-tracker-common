@@ -154,6 +154,12 @@ type DecimalExt struct {
 	Decimal
 }
 
+func NewFromStringChecked(s string) Decimal {
+	retval, err := NewFromString(s)
+	CheckError(err)
+	return retval
+}
+
 func (w DecimalExt) MarshalBSON() ([]byte, error) {
 	intermediate := make(map[string]interface{})
 	intermediate["value"] = w.String()
@@ -430,9 +436,6 @@ const TimeFormatPostGres = time.RFC3339Nano
 const TimeFormatUnknown = "2006-01-02T15:04:05Z"
 
 func (wd *WatchDetail) GetDtReferenceDesc() string {
-	//postgres
-	//parse, err := time.Parse(TimeFormatPostGres, wd.Watch.DtReference)
-	//mysql
 	parse, err := time.Parse(TimeFormatMySql, wd.Watch.DtReference)
 	if err != nil {
 		parse, err = time.Parse(TimeFormatUnknown, wd.Watch.DtReference)
@@ -828,4 +831,8 @@ func getIexUrl(stock Stock) string {
 type Account struct {
 	AccountId   int
 	AccountName string
+}
+
+type HttpRequest interface {
+	GetApiKey() string
 }

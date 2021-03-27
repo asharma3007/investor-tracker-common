@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	"cloud.google.com/go/pubsub"
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"encoding/json"
 	"fmt"
@@ -89,4 +90,41 @@ func getSecret(envSecretName string) string {
 		log.Fatalf("failed to access secret version: %v", err)
 	}
 	return string(result.Payload.Data)
+}
+
+func PubSubPublish(projectID, topicID, msg string) error {
+	ctx := context.Background()
+	client, err := pubsub.NewClient(ctx, projectID)
+	if err != nil {
+		return fmt.Errorf("pubsub.NewClient: %v", err)
+	}
+
+	t := client.Topic(topicID)
+	result := t.Publish(ctx, &pubsub.Message{
+		Data: []byte(msg),
+	})
+	// Block until the result is returned and a server-generated
+	// ID is returned for the published message.
+	id, err := result.Get(ctx)
+	if err != nil {
+		return fmt.Errorf("Get: %v", err)
+	}
+	Log(fmt.Sprintf("Published a message; msg ID: %v", id))
+	return nil
+}
+
+func SendEmail(email MessageSendEmail) {
+	jsonBytes, err := json.Marshal(email)
+	CheckError(err)
+	jsonStr := string(jsonBytes)
+
+	Log(fmt.Sprintf("JSON to publish: %v", jsonStr))
+	if os.Getenv("LOCAL") == "1" {
+		WriteStringToFile("output/email.json", jsonStr)
+		url := os.Getenv(EnvUrlEmailQueue)
+		PostJsonToUrl(url, email)
+	} else {
+		err := PubSubPublish("investor-tracker", "alerts-ready", jsonStr)
+		CheckError(err)
+	}
 }
