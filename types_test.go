@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	. "github.com/shopspring/decimal"
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 )
@@ -203,6 +204,7 @@ func TestGetDeltaReferencePercentDesc(t *testing.T) {
 }
 
 func TestGetCurrencyConversion(t *testing.T) {
+	os.Setenv(EnvSecretRateApiKey, "EXCHANGERATEAPI_KEY")
 	conversionValue := GetConversionValue(CURRENCY_GBP, CURRENCY_USD)
 	Log(conversionValue.String())
 }
@@ -216,3 +218,22 @@ func TestCurrencyConversion(t *testing.T) {
 	toCurrency := from.toCurrency(CURRENCY_USD)
 	Log(toCurrency.GetDesc())
 }
+
+func TestParseCurrencyConversion(t *testing.T) {
+	fakeResponse, err := ioutil.ReadFile("examples/exchangeratesapiresponse.json")
+	CheckError(err)
+
+	testParseRate(t, fakeResponse, CURRENCY_GBP, CURRENCY_USD, "1.3708498582590456")
+	testParseRate(t, fakeResponse, CURRENCY_USD, CURRENCY_GBP, "0.7294744891099758")
+}
+
+func testParseRate(t *testing.T, fakeResponse []byte, from string, to string, expected string) {
+	conversion := parseRateFromResponse(fakeResponse, from, to)
+
+	actual := conversion.String()
+
+	if expected != actual {
+		t.Errorf("Parse currency conversion %v to %v failed expected %v actual %v", from, to, expected, actual)
+	}
+}
+

@@ -12,7 +12,6 @@ import (
 const (
 	CURRENCY_GBP = "GBP"
 	CURRENCY_USD = "USD"
-	CURRENCY_EUR = "EUR"
 )
 
 var currencyConverter = make(map[string]Decimal)
@@ -93,14 +92,11 @@ func getLastWorkingDay() time.Time {
 }
 
 func GetConversionValue(from string, to string) Decimal {
+	//weekdayStr := getLastWorkingDay().Format("2006-01-02")
 
-	weekdayStr := getLastWorkingDay().Format("2006-01-02")
-
-	url := "https://api.exchangeratesapi.io/history?" +
-		"start_at=" + weekdayStr +
-		"&end_at=" + weekdayStr +
-		"&base=" + from +
-		"&symbols=" + to
+	url := "http://api.exchangeratesapi.io/v1/latest?" +
+		"access_key=" + GetSecret(EnvSecretRateApiKey) +
+		"&symbols=" + from + "," + to
 
 	Log(url)
 
@@ -112,14 +108,25 @@ func GetConversionValue(from string, to string) Decimal {
 	responseData, err := ioutil.ReadAll(response.Body)
 	CheckError(err)
 
+	return parseRateFromResponse(responseData, from, to)
+}
+
+func parseRateFromResponse(responseData []byte, from string, to string) Decimal {
 	responseString := string(responseData)
 	Log(responseString)
 
 	var retval map[string]interface{}
-	err = json.Unmarshal(responseData, &retval)
+	err := json.Unmarshal(responseData, &retval)
 	CheckError(err)
 
-	conversion := retval["rates"].(map[string]interface{})[weekdayStr].(map[string]interface{})[to].(float64)
+	//conversion := retval["rates"].(map[string]interface{})[weekdayStr].(map[string]interface{})[to].(float64)
+
+	conversionFromEuros := retval["rates"].(map[string]interface{})
+	fromInEuros := conversionFromEuros[from].(float64)
+	toInEuros := conversionFromEuros[to].(float64)
+
+	conversion := toInEuros / fromInEuros
+
 	return NewFromFloat(conversion)
 }
 

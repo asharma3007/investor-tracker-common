@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	cloud.google.com/go v0.70.0
+	cloud.google.com/go/pubsub v1.3.1
 	github.com/PuerkitoBio/goquery v1.6.0
 	github.com/shopspring/decimal v1.2.0
 	go.mongodb.org/mongo-driver v1.4.4
